@@ -1,23 +1,22 @@
 ﻿
-namespace DnKR.AmeliaBot
-{
-    internal class Program
-    {
-        static void Main(string[] args)
-        {
-            if(args.Length == 0)
-            {
-                Console.WriteLine("Write the bot token");
-                return;
-            }
-            MainAsync(args[0]).GetAwaiter().GetResult();
-        }
+namespace DnKR.AmeliaBot;
 
-        static async Task MainAsync(string token)
+internal class Program
+{
+    static void Main(string[] args)
+    {
+        if(args.Length == 0)
         {
-            var bot = new Bot(token);
-            await bot.Run();
-            await Task.Delay(-1);
+            Console.WriteLine("Write the bot token");
+            return;
         }
+        MainAsync(args[0]).GetAwaiter().GetResult();
+    }
+
+    static async Task MainAsync(string token)
+    {
+        var bot = new Bot(token);
+        await bot.Run();
+        await Task.Delay(-1);
     }
 }

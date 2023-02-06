@@ -2,107 +2,106 @@
 using DSharpPlus.Entities;
 using DSharpPlus.Lavalink;
 
-namespace DnKR.AmeliaBot.Music
+namespace DnKR.AmeliaBot.Music;
+
+public static class Embeds
 {
-    public static class Embeds
+    public static DiscordEmbed NowPlaying(LavalinkTrack track, LavalinkTrack? next)
     {
-        public static DiscordEmbed NowPlaying(LavalinkTrack track, LavalinkTrack? next)
+        var builder = new DiscordEmbedBuilder()
         {
-            var builder = new DiscordEmbedBuilder()
-            {
-                Color = Bot.Client.CurrentUser.BannerColor ?? DiscordColor.Gray,
-                Title = "Сейчас играет :musical_note:",
-                Url = track.Uri.ToString(),
-                Description = $"[{track.Title}]({track.Uri})"
-            };
-            builder.WithThumbnail($"https://i3.ytimg.com/vi/{track.Identifier}/maxresdefault.jpg");
-            builder.AddField("Автор: ", track.Author, false);
-            builder.AddField("Длительность: ", track.Length.ToString(), false);
-            builder.AddField("Дальше: ", next != null ? next.Title : "Ничего", false);
+            Color = Bot.Client.CurrentUser.BannerColor ?? DiscordColor.Gray,
+            Title = "Сейчас играет :musical_note:",
+            Url = track.Uri.ToString(),
+            Description = $"[{track.Title}]({track.Uri})"
+        };
+        builder.WithThumbnail($"https://i3.ytimg.com/vi/{track.Identifier}/maxresdefault.jpg");
+        builder.AddField("Автор: ", track.Author, false);
+        builder.AddField("Длительность: ", track.Length.ToString(), false);
+        builder.AddField("Дальше: ", next != null ? next.Title : "Ничего", false);
 
-            return builder.Build();
-        }
+        return builder.Build();
+    }
 
-        public static DiscordEmbed TrackAdded(LavalinkTrack track, DiscordMember reqby)
+    public static DiscordEmbed TrackAdded(LavalinkTrack track, DiscordMember reqby)
+    {
+        var builder = new DiscordEmbedBuilder()
         {
-            var builder = new DiscordEmbedBuilder()
-            {
-                Color = reqby.Color,
-                Title = "Трек добавлен!",
-                Url = track.Uri.ToString(),
-                Description = $"[{track.Title}]({track.Uri})"
-            };
-            builder.WithThumbnail($"https://i3.ytimg.com/vi/{track.Identifier}/maxresdefault.jpg");
-            builder.AddField("Автор: ", track.Author, true);
-            builder.AddField("Длительность: ", track.Length.ToString(), false);
+            Color = reqby.Color,
+            Title = "Трек добавлен!",
+            Url = track.Uri.ToString(),
+            Description = $"[{track.Title}]({track.Uri})"
+        };
+        builder.WithThumbnail($"https://i3.ytimg.com/vi/{track.Identifier}/maxresdefault.jpg");
+        builder.AddField("Автор: ", track.Author, true);
+        builder.AddField("Длительность: ", track.Length.ToString(), false);
 
-            return builder.Build();
-        }
+        return builder.Build();
+    }
 
-        public static DiscordEmbed QueueEmbed(GuildPlaylist? playlist, DiscordMember reqby)
+    public static DiscordEmbed QueueEmbed(GuildPlaylist? playlist, DiscordMember reqby)
+    {
+        var builder = new DiscordEmbedBuilder()
         {
-            var builder = new DiscordEmbedBuilder()
+            Color = reqby.Color,
+            Url = "https://github.com/dkrsk"
+        };
+        string desc = string.Empty;
+        if (playlist != null && playlist.Count > 0)
+        {
+            builder.Title = $"Очередь для {playlist.Channel.Name}";
+            for (int i = 0; i < playlist.Count; i++)
             {
-                Color = reqby.Color,
-                Url = "https://github.com/dkrsk"
-            };
-            string desc = string.Empty;
-            if (playlist != null && playlist.Count > 0)
-            {
-                builder.Title = $"Очередь для {playlist.Channel.Name}";
-                for (int i = 0; i < playlist.Count; i++)
-                {
-                    var track = playlist.At(i);
-                    desc += $"{i + 1}. {track.Title} | {track.Length}\n";
-                }
+                var track = playlist.At(i);
+                desc += $"{i + 1}. {track.Title} | {track.Length}\n";
             }
-            else
-            {
-                desc = "Очередь пуста!";
-            }
-
-            builder.WithDescription(desc);
-            return builder.Build();
         }
-
-        public static DiscordWebhookBuilder SearchEmbed(LavalinkTrack[]? tracks, DiscordMember reqby)
+        else
         {
-            var embedBuilder = new DiscordEmbedBuilder()
-            {
-                Color = reqby.Color,
-                Title = "Результаты поиска",
-            };
-            string desc = string.Empty;
-            for (int i = 0; i <= 4; i++)
-            {
-                desc += $"{i + 1}. {tracks[i].Title}\n";
-            }
-            embedBuilder.WithDescription(desc);
-
-            var buttons = new DiscordComponent[]
-            {
-                new DiscordButtonComponent(ButtonStyle.Primary, "btn_srch_1", "1"),
-                new DiscordButtonComponent(ButtonStyle.Primary, "btn_srch_2", "2"),
-                new DiscordButtonComponent(ButtonStyle.Primary, "btn_srch_3", "3"),
-                new DiscordButtonComponent(ButtonStyle.Primary, "btn_srch_4", "4"),
-                new DiscordButtonComponent(ButtonStyle.Primary, "btn_srch_5", "5"),
-            };
-
-            var builder = new DiscordWebhookBuilder()
-                .AddEmbed(embedBuilder)
-                .AddComponents(buttons);
-
-            return builder;
+            desc = "Очередь пуста!";
         }
 
-        public static DiscordEmbed UniEmbed(string query, DiscordMember reqby)
+        builder.WithDescription(desc);
+        return builder.Build();
+    }
+
+    public static DiscordWebhookBuilder SearchEmbed(LavalinkTrack[]? tracks, DiscordMember reqby)
+    {
+        var embedBuilder = new DiscordEmbedBuilder()
         {
-            var builder = new DiscordEmbedBuilder()
-            {
-                Color = reqby.Color,
-                Title = query
-            };
-            return builder.Build();
+            Color = reqby.Color,
+            Title = "Результаты поиска",
+        };
+        string desc = string.Empty;
+        for (int i = 0; i <= 4; i++)
+        {
+            desc += $"{i + 1}. {tracks[i].Title}\n";
         }
+        embedBuilder.WithDescription(desc);
+
+        var buttons = new DiscordComponent[]
+        {
+            new DiscordButtonComponent(ButtonStyle.Primary, "btn_srch_1", "1"),
+            new DiscordButtonComponent(ButtonStyle.Primary, "btn_srch_2", "2"),
+            new DiscordButtonComponent(ButtonStyle.Primary, "btn_srch_3", "3"),
+            new DiscordButtonComponent(ButtonStyle.Primary, "btn_srch_4", "4"),
+            new DiscordButtonComponent(ButtonStyle.Primary, "btn_srch_5", "5"),
+        };
+
+        var builder = new DiscordWebhookBuilder()
+            .AddEmbed(embedBuilder)
+            .AddComponents(buttons);
+
+        return builder;
+    }
+
+    public static DiscordEmbed UniEmbed(string query, DiscordMember reqby)
+    {
+        var builder = new DiscordEmbedBuilder()
+        {
+            Color = reqby.Color,
+            Title = query
+        };
+        return builder.Build();
     }
 }

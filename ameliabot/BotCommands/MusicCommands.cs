@@ -4,12 +4,14 @@ using DSharpPlus.SlashCommands;
 using DSharpPlus.Entities;
 
 using DnKR.AmeliaBot.Music;
+using DSharpPlus.CommandsNext;
 
 namespace DnKR.AmeliaBot.BotCommands;
 
-public class MusicCommands : ApplicationCommandModule
+
+public class MusicCommands
 {
-    public async Task<string> JoinAsync(InteractionContext ctx)
+    private static async Task<string> _JoinAsync(CommonContext ctx)
     {
         var lava = Bot.Lava;
         var channel = ctx.Member.VoiceState.Channel;
@@ -42,33 +44,29 @@ public class MusicCommands : ApplicationCommandModule
         return $"Подключилась к {channel.Name}";
     }
 
-    [SlashCommand("join", "Подключиться к твоему голосовому каналу")]
-    public async Task JoinCommand(InteractionContext ctx)
+    public static async Task JoinAsync(CommonContext ctx)
     {
-        await ctx.CreateResponseAsync(Embeds.UniEmbed(await JoinAsync(ctx), ctx.Member));
+        await ctx.RespondAsync(Embeds.UniEmbed(await _JoinAsync(ctx), ctx.Member));
     }
 
-    [SlashCommand("leave", "Покинуть голосовой канал")]
-    public async Task LeaveAsync(InteractionContext ctx)
+    public static async Task LeaveAsync(CommonContext ctx)
     {
         var lava = Bot.Lava;
         var conn = lava.node.GetGuildConnection(ctx.Guild);
 
         if (conn == null)
         {
-            await ctx.CreateResponseAsync(Embeds.UniEmbed("Но я никуда не подключена!", ctx.Member));
-            return;
+            await ctx.RespondAsync(Embeds.UniEmbed("Но я никуда не подключена!", ctx.Member));
         }
 
         await Bot.RemovePlaylistAsync(ctx.Guild);
         await conn.DisconnectAsync();
             
 
-        await ctx.CreateResponseAsync(Embeds.UniEmbed("Пока!", ctx.Member));
+        await ctx.RespondAsync(Embeds.UniEmbed("Пока!", ctx.Member));
     }
 
-    [SlashCommand("play", "Добавить трек в очередь")]
-    public async Task Play(InteractionContext ctx, [Option("название", "Название трека")] string query)
+    public static async Task PlayAsync(CommonContext ctx, string query)
     {
         var lava = Bot.Lava;
 
@@ -76,32 +74,32 @@ public class MusicCommands : ApplicationCommandModule
 
         if(searchResult.LoadResultType == LavalinkLoadResultType.LoadFailed || searchResult.LoadResultType == LavalinkLoadResultType.NoMatches)
         {
-            await ctx.CreateResponseAsync(Embeds.UniEmbed($"По запросу {query} ничего не нашлось.", ctx.Member));
+            await ctx.RespondAsync(Embeds.UniEmbed($"По запросу {query} ничего не нашлось.", ctx.Member));
             return;
         }
 
         var track = searchResult.Tracks.First();
-        await ctx.CreateResponseAsync(Embeds.TrackAdded(track, ctx.Member));
+        await ctx.RespondAsync(Embeds.TrackAdded(track, ctx.Member));
 
-        await this.JoinAsync(ctx);
+        await _JoinAsync(ctx);
 
         var playlist = Bot.GetPlaylist(ctx.Guild);
 
         await playlist.AddAsync(track);
     }
 
-    [SlashCommand("search", "Выбрать трек из первых 10 по поиску")]
-    public async Task Search(InteractionContext ctx, [Option("название", "Название трека")] string query)
+    public static async Task SearchAsync(CommonContext ctx, string query)
     {
         var lava = Bot.Lava;
 
-        await ctx.DeferAsync(false);
+        if (ctx.DeferAsync != null)
+            await ctx.DeferAsync(false);
 
         var searchResult = await lava.node.Rest.GetTracksAsync(query);
 
         if (searchResult.LoadResultType == LavalinkLoadResultType.LoadFailed || searchResult.LoadResultType == LavalinkLoadResultType.NoMatches)
         {
-            await ctx.CreateResponseAsync(Embeds.UniEmbed($"По запросу {query} ничего не нашлось.", ctx.Member));
+            await ctx.RespondAsync(Embeds.UniEmbed($"По запросу {query} ничего не нашлось.", ctx.Member));
             return;
         }
 
@@ -109,63 +107,64 @@ public class MusicCommands : ApplicationCommandModule
 
         var tracks = searchResult.Tracks.ToArray();
 
-        await this.JoinAsync(ctx);
+        await _JoinAsync(ctx);
         var playlist = Bot.GetPlaylist(ctx.Guild);
         playlist.SearchResults = tracks[..5];
 
-        //await ctx.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate, Embeds.SearchEmbed(tracks, ctx.Member));
-        await ctx.EditResponseAsync(Embeds.SearchEmbed(tracks, ctx.Member));
+        var searchEmbed = Embeds.SearchEmbed(tracks, ctx.Member);
 
+        if (ctx.EditResponseAsync != null)
+            await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(searchEmbed.Item1).AddComponents(searchEmbed.Item2));
+        else
+            await ctx.RespondAsync(searchEmbed.Item1, false, searchEmbed.Item2);
     }
 
-    [SlashCommand("skip", "Пропустить текущий трек")]
-    public async Task Skip(InteractionContext ctx, [Option("количество", "Сколько треков пропустить")] long count = 1)
+    public static async Task SkipAsync(CommonContext ctx, long count)
     {
         var playlist = Bot.GetPlaylist(ctx.Guild);
         if(playlist != null)
         {
             if(!playlist.Any() && playlist.CurrentTrack == null)
             {
-                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                new DiscordInteractionResponseBuilder().WithContent("Очередь пуста!"));
+                await ctx.RespondAsync(Embeds.UniEmbed("Очередь пуста!", ctx.Member));
                 return;
             }
-            await ctx.CreateResponseAsync(Embeds.UniEmbed($"{playlist.CurrentTrack.Title} пропущен.", ctx.Member));
+            await ctx.RespondAsync(Embeds.UniEmbed($"{playlist.CurrentTrack.Title} пропущен.", ctx.Member));
             await playlist.PlayNext((int)count);
         }
     }
 
-    [SlashCommand("queue", "Показать текущую очередь воспроизведения")]
-    public async Task Queue(InteractionContext ctx)
+    public static async Task QueueAsync(CommonContext ctx)
     {
-        await ctx.DeferAsync();
+        if(ctx.DeferAsync != null) await ctx.DeferAsync();
         var playlist = Bot.GetPlaylist(ctx.Guild);
-        await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(Embeds.QueueEmbed(playlist, ctx.Member)));
+        if (ctx.EditResponseAsync != null)
+            await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(Embeds.QueueEmbed(playlist, ctx.Member)));
+        else
+            await ctx.RespondAsync(Embeds.QueueEmbed(playlist, ctx.Member));
     }
 
-    [SlashCommand("remove", "Убрать трек из очереди")]
-    public async Task Remove(InteractionContext ctx, [Option("Номер", "Номер удаляемого трека в очереди")]long position)
+    public static async Task RemoveAsync(CommonContext ctx, long position)
     {
         var playlist = Bot.GetPlaylist(ctx.Guild);
         if(playlist != null && playlist.Count < position)
         {
             playlist.Remove((int)position);
-            await ctx.CreateResponseAsync(Embeds.UniEmbed($"`{position}.` {playlist.CurrentTrack} удален.", ctx.Member));
+            await ctx.RespondAsync(Embeds.UniEmbed($"`{position}.` {playlist.CurrentTrack} удален.", ctx.Member));
         }
         else
         {
-            await ctx.CreateResponseAsync(Embeds.UniEmbed($"Невозможно удалить трек `{position}`. Неверный номер.", ctx.Member));
+            await ctx.RespondAsync(Embeds.UniEmbed($"Невозможно удалить трек `{position}`. Неверный номер.", ctx.Member));
         }
     }
 
-    [SlashCommand("loop", "Зациклить трек")]
-    public async Task Loop(InteractionContext ctx)
+    public static async Task LoopAsync(CommonContext ctx)
     {
         var playlist = Bot.GetPlaylist(ctx.Guild);
         if(playlist != null && playlist.CurrentTrack != null)
         {
             playlist.ChangeRepeat();
-            await ctx.CreateResponseAsync(Embeds.UniEmbed($"Трек {(playlist.IsRepeat ? "зациклен" : "расциклен")}", ctx.Member));
+            await ctx.RespondAsync(Embeds.UniEmbed($"Трек {(playlist.IsRepeat ? "зациклен" : "расциклен")}", ctx.Member));
         }
     }
 

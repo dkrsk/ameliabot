@@ -1,4 +1,5 @@
-﻿using DSharpPlus.Entities;
+﻿using DnKR.AmeliaBot.BotCommands;
+using DSharpPlus.Entities;
 using DSharpPlus.Lavalink;
 using DSharpPlus.SlashCommands;
 
@@ -26,7 +27,7 @@ public class GuildPlaylist
     private List<LavalinkTrack> playlist;
     private LavalinkTrack?[] searchList = new LavalinkTrack?[5];
 
-    public GuildPlaylist(InteractionContext ctx)
+    public GuildPlaylist(CommonContext ctx)
     {
         lava = Bot.Lava;
         this.guild = ctx.Guild;

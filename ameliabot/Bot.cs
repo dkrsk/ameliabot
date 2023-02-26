@@ -8,6 +8,7 @@ using DSharpPlus.Entities;
 
 using DnKR.AmeliaBot.BotCommands;
 using DnKR.AmeliaBot.Music;
+using DSharpPlus.CommandsNext;
 
 namespace DnKR.AmeliaBot;
 
@@ -31,6 +32,7 @@ public class Bot
 
     private readonly DiscordConfiguration dconf;
     private readonly SlashCommandsExtension slashs;
+    private readonly CommandsNextExtension next;
     private readonly LavalinkExtension lavalink;
     private readonly LavalinkConfiguration lavaConfig;
 
@@ -40,16 +42,27 @@ public class Bot
         {
             AutoReconnect = true,
             Token = token,
-            TokenType = TokenType.Bot
+            TokenType = TokenType.Bot,
+            Intents = DiscordIntents.All
         };
             
         discord = new(dconf);
         Client = discord;
+
         SlashCommandsConfiguration commandsConfiguration = new();
-            
+
         slashs = discord.UseSlashCommands();
         slashs.RegisterCommands<MainCommands>(820240588556337164UL); // skipcq: CS-R1076
-        slashs.RegisterCommands<MusicCommands>(820240588556337164UL); // skipcq: CS-R1076
+        slashs.RegisterCommands<MusicSlashCommands>(820240588556337164UL); // skipcq: CS-R1076
+
+
+        CommandsNextConfiguration nextConfiguration = new()
+        {
+            StringPrefixes = new[] { "d!", "в!" }
+        };
+
+        next = discord.UseCommandsNext(nextConfiguration);
+        next.RegisterCommands<MusicNextCommands>();
 
         discord.ComponentInteractionCreated += Events.ButtonSearchClicked;
 
@@ -86,7 +99,7 @@ public class Bot
         return null;
     }
 
-    public static void CreatePlaylist(InteractionContext ctx)
+    public static void CreatePlaylist(CommonContext ctx)
     {
         Playlists.Add(ctx.Guild, new GuildPlaylist(ctx));
     }

@@ -7,6 +7,7 @@ using DSharpPlus.Lavalink;
 using DSharpPlus.Entities;
 
 using DnKR.AmeliaBot.BotCommands;
+using DnKR.AmeliaBot.BotCommands.MusicCommands;
 using DnKR.AmeliaBot.Music;
 using DSharpPlus.CommandsNext;
 

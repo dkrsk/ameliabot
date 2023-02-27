@@ -1,6 +1,6 @@
 ﻿using DSharpPlus.SlashCommands;
 
-namespace DnKR.AmeliaBot.BotCommands;
+namespace DnKR.AmeliaBot.BotCommands.MusicCommands;
 
 public class MusicSlashCommands : ApplicationCommandModule
 {

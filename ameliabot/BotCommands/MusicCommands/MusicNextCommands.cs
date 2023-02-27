@@ -1,7 +1,7 @@
 ﻿using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 
-namespace DnKR.AmeliaBot.BotCommands;
+namespace DnKR.AmeliaBot.BotCommands.MusicCommands;
 
 public class MusicNextCommands : BaseCommandModule
 {

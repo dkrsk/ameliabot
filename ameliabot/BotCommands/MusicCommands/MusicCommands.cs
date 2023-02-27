@@ -4,7 +4,7 @@ using DSharpPlus.Entities;
 
 using DnKR.AmeliaBot.Music;
 
-namespace DnKR.AmeliaBot.BotCommands;
+namespace DnKR.AmeliaBot.BotCommands.MusicCommands;
 
 
 public class MusicCommands

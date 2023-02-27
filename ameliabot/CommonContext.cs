@@ -1,5 +1,4 @@
-﻿using DnKR.AmeliaBot;
-using DSharpPlus.CommandsNext;
+﻿using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 

@@ -101,15 +101,21 @@ public class Bot
 
     public static void CreatePlaylist(CommonContext ctx)
     {
-        Playlists.Add(ctx.Guild, new GuildPlaylist(ctx));
+        try
+        {
+            Playlists.Add(ctx.Guild, new GuildPlaylist(ctx));
+        }
+        catch (ArgumentException) { }
     }
 
     public static async Task RemovePlaylistAsync(DiscordGuild guild)
     {
-        var playlist = Playlists[guild];
-        await playlist.Connection.StopAsync();
-        Playlists.Remove(guild);
+        if (Playlists.TryGetValue(guild, out GuildPlaylist? playlist))
+        {
+            await playlist.Connection.StopAsync();
+            Playlists.Remove(guild);
+        }
+        else return;        
     }
-
         
 }

@@ -65,7 +65,7 @@ public static class Embeds
         return builder.Build();
     }
 
-    public static Tuple<DiscordEmbed, DiscordComponent[]> SearchEmbed(LavalinkTrack[]? tracks, DiscordMember reqby)
+    public static Tuple<DiscordEmbed, DiscordComponent[]> SearchEmbed(LavalinkTrack[] tracks, DiscordMember reqby)
     {
         var embedBuilder = new DiscordEmbedBuilder()
         {
@@ -87,10 +87,6 @@ public static class Embeds
             new DiscordButtonComponent(ButtonStyle.Primary, "btn_srch_4", "4"),
             new DiscordButtonComponent(ButtonStyle.Primary, "btn_srch_5", "5"),
         };
-        
-        var builder = new DiscordWebhookBuilder()
-            .AddEmbed(embedBuilder)
-            .AddComponents(buttons);
 
         return Tuple.Create(embedBuilder.Build(), buttons);
     }

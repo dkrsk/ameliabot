@@ -1,17 +1,15 @@
 ﻿using DSharpPlus;
 using DSharpPlus.Lavalink;
-using DSharpPlus.SlashCommands;
 using DSharpPlus.Entities;
 
 using DnKR.AmeliaBot.Music;
-using DSharpPlus.CommandsNext;
 
 namespace DnKR.AmeliaBot.BotCommands;
 
 
 public class MusicCommands
 {
-    private static async Task<string> _JoinAsync(CommonContext ctx)
+    private static async Task<string> TryJoinAsync(CommonContext ctx)
     {
         var lava = Bot.Lava;
         var channel = ctx.Member.VoiceState.Channel;
@@ -46,7 +44,7 @@ public class MusicCommands
 
     public static async Task JoinAsync(CommonContext ctx)
     {
-        await ctx.RespondAsync(Embeds.UniEmbed(await _JoinAsync(ctx), ctx.Member));
+        await ctx.RespondAsync(Embeds.UniEmbed(await TryJoinAsync(ctx), ctx.Member));
     }
 
     public static async Task LeaveAsync(CommonContext ctx)
@@ -54,12 +52,14 @@ public class MusicCommands
         var lava = Bot.Lava;
         var conn = lava.node.GetGuildConnection(ctx.Guild);
 
+        await Bot.RemovePlaylistAsync(ctx.Guild);
+
         if (conn == null)
         {
             await ctx.RespondAsync(Embeds.UniEmbed("Но я никуда не подключена!", ctx.Member));
+            return;
         }
 
-        await Bot.RemovePlaylistAsync(ctx.Guild);
         await conn.DisconnectAsync();
             
 
@@ -81,11 +81,12 @@ public class MusicCommands
         var track = searchResult.Tracks.First();
         await ctx.RespondAsync(Embeds.TrackAdded(track, ctx.Member));
 
-        await _JoinAsync(ctx);
+        await TryJoinAsync(ctx);
 
         var playlist = Bot.GetPlaylist(ctx.Guild);
-
-        await playlist.AddAsync(track);
+        if (playlist != null)
+            await playlist.AddAsync(track);
+        else throw new NullReferenceException("_JoinAsync wasn't create playlist instance for some reason");
     }
 
     public static async Task SearchAsync(CommonContext ctx, string query)
@@ -103,13 +104,13 @@ public class MusicCommands
             return;
         }
 
-        //await ctx.DeferAsync(true);
-
         var tracks = searchResult.Tracks.ToArray();
 
-        await _JoinAsync(ctx);
+        await TryJoinAsync(ctx);
         var playlist = Bot.GetPlaylist(ctx.Guild);
-        playlist.SearchResults = tracks[..5];
+        if (playlist != null)
+            playlist.SearchResults = tracks[..5];
+        else throw new NullReferenceException("_JoinAsync wasn't create playlist instance for some reason");
 
         var searchEmbed = Embeds.SearchEmbed(tracks, ctx.Member);
 
@@ -124,9 +125,9 @@ public class MusicCommands
         var playlist = Bot.GetPlaylist(ctx.Guild);
         if(playlist != null)
         {
-            if(!playlist.Any() && playlist.CurrentTrack == null)
+            if(playlist.CurrentTrack == null)
             {
-                await ctx.RespondAsync(Embeds.UniEmbed("Очередь пуста!", ctx.Member));
+                await ctx.RespondAsync(Embeds.UniEmbed("Ничего не воспроизводится!", ctx.Member));
                 return;
             }
             await ctx.RespondAsync(Embeds.UniEmbed($"{playlist.CurrentTrack.Title} пропущен.", ctx.Member));

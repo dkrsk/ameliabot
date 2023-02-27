@@ -1,17 +1,13 @@
-﻿using DnKR.AmeliaBot.BotCommands;
-using DSharpPlus.Entities;
+﻿using DSharpPlus.Entities;
 using DSharpPlus.Lavalink;
-using DSharpPlus.SlashCommands;
 
 namespace DnKR.AmeliaBot.Music;
 
 public class GuildPlaylist
 {
     public LavalinkTrack? CurrentTrack => currentTrack;
-    //public List<LavalinkTrack> Playlist => playlist;
     public LavalinkGuildConnection Connection => connection;
     public DiscordChannel Channel => channel;
-    public LavaEntities Lava => lava;
 
     public LavalinkTrack?[] SearchResults { get => searchList; set => searchList = value; } 
     public int Count => playlist.Count;
@@ -19,12 +15,12 @@ public class GuildPlaylist
         
 
     private readonly LavaEntities lava;
-    private LavalinkTrack? currentTrack;
     private readonly LavalinkGuildConnection connection;
     private readonly DiscordChannel channel;
-    private DiscordMessage? message;
     private readonly DiscordGuild guild;
-    private List<LavalinkTrack> playlist;
+    private readonly List<LavalinkTrack> playlist;
+    private LavalinkTrack? currentTrack;
+    private DiscordMessage? message;
     private LavalinkTrack?[] searchList = new LavalinkTrack?[5];
 
     public GuildPlaylist(CommonContext ctx)
@@ -142,11 +138,13 @@ public class GuildPlaylist
 
     public LavalinkTrack At(int index)
     {
-        return playlist[index];
+        if(index <= Count-1)
+            return playlist[index];
+        else throw new ArgumentOutOfRangeException(nameof(index));
     }
 
     public void ChangeRepeat()
     {
-        IsRepeat = IsRepeat ? false : true;
+        IsRepeat = !IsRepeat;
     }
 }

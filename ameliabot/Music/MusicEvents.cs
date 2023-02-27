@@ -6,7 +6,7 @@ using DSharpPlus.Lavalink.EventArgs;
 
 namespace DnKR.AmeliaBot.Music;
 
-public static class Events
+public static class MusicEvents
 {
     public static async Task PlaybackFinished(LavalinkGuildConnection lava, TrackFinishEventArgs args)
     {

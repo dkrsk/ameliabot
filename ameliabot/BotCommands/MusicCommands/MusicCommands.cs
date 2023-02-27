@@ -7,7 +7,7 @@ using DnKR.AmeliaBot.Music;
 namespace DnKR.AmeliaBot.BotCommands.MusicCommands;
 
 
-public class MusicCommands
+public static class MusicCommands
 {
     private static async Task<string> TryJoinAsync(CommonContext ctx)
     {
@@ -37,7 +37,7 @@ public class MusicCommands
 
         Bot.CreatePlaylist(ctx);
 
-        conn.PlaybackFinished += Events.PlaybackFinished;
+        conn.PlaybackFinished += MusicEvents.PlaybackFinished;
 
         return $"Подключилась к {channel.Name}";
     }

@@ -2,14 +2,16 @@
 
 using DSharpPlus;
 using DSharpPlus.SlashCommands;
+using DSharpPlus.CommandsNext;
 using DSharpPlus.Net;
 using DSharpPlus.Lavalink;
 using DSharpPlus.Entities;
 
 using DnKR.AmeliaBot.BotCommands;
 using DnKR.AmeliaBot.BotCommands.MusicCommands;
+using DnKR.AmeliaBot.BotCommands.ChatCommands;
 using DnKR.AmeliaBot.Music;
-using DSharpPlus.CommandsNext;
+
 
 namespace DnKR.AmeliaBot;
 
@@ -55,6 +57,7 @@ public class Bot
         slashs = discord.UseSlashCommands();
         slashs.RegisterCommands<MainCommands>(820240588556337164UL); // skipcq: CS-R1076
         slashs.RegisterCommands<MusicSlashCommands>(820240588556337164UL); // skipcq: CS-R1076
+        slashs.RegisterCommands<ChatSlashCommands>(820240588556337164UL); // skipcq: CS-R1076
 
 
         CommandsNextConfiguration nextConfiguration = new()
@@ -64,8 +67,9 @@ public class Bot
 
         next = discord.UseCommandsNext(nextConfiguration);
         next.RegisterCommands<MusicNextCommands>();
+        next.RegisterCommands<ChatNextCommands>();
 
-        discord.ComponentInteractionCreated += Events.ButtonSearchClicked;
+        discord.ComponentInteractionCreated += MusicEvents.ButtonSearchClicked;
 
         var endpoint = new ConnectionEndpoint("127.0.0.1", 2334);
         lavaConfig = new LavalinkConfiguration()
@@ -75,8 +79,8 @@ public class Bot
             RestEndpoint = endpoint
         };
         lavalink = discord.UseLavalink();
-            
 
+        discord.MessageCreated += ChatEvents.MessageCreated;
     }
 
     ~Bot()

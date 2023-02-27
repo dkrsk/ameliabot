@@ -84,7 +84,7 @@ public class Bot
         Lava.node.StopAsync().GetAwaiter().GetResult();
     }
 
-    public async Task Run()
+    public async Task RunAsync()
     {
         await this.discord.ConnectAsync();
         await this.lavalink.ConnectAsync(this.lavaConfig);

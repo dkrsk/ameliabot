@@ -42,7 +42,7 @@ public class GuildPlaylist
         playlist.Add(track);
         if(currentTrack != null || Any())
         {
-            await PlayNext();
+            await PlayNextAsync();
         }
     }
 
@@ -66,7 +66,7 @@ public class GuildPlaylist
         return null;
     }
 
-    public async Task PlayNext(int skip)
+    public async Task PlayNextAsync(int skip)
     {
         if (connection.CurrentState.CurrentTrack != null && skip <= 0)
         {
@@ -92,21 +92,21 @@ public class GuildPlaylist
             await connection.PlayAsync(track);
             currentTrack = track;
 
-            await SetMessage();
+            await SetMessageAsync();
 
             return;
         }
         currentTrack = null;
-        await SetMessage();
+        await SetMessageAsync();
         await connection.StopAsync();
     }
 
-    public async Task PlayNext()
+    public async Task PlayNextAsync()
     {
-        await PlayNext(0);
+        await PlayNextAsync(0);
     }
 
-    private async Task SetMessage()
+    private async Task SetMessageAsync()
     {
         if(currentTrack != null)
         {

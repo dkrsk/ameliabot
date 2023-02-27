@@ -16,7 +16,7 @@ internal class Program
     static async Task MainAsync(string token)
     {
         var bot = new Bot(token);
-        await bot.Run();
+        await bot.RunAsync();
         await Task.Delay(-1);
     }
 }

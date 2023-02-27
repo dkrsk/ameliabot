@@ -13,7 +13,7 @@ public static class Events
         var playlist = Bot.GetPlaylist(lava.Guild);
         if (playlist != null)
         {
-            await playlist.PlayNext();
+            await playlist.PlayNextAsync();
                 
         }
     }

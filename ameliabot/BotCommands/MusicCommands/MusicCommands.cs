@@ -86,7 +86,7 @@ public class MusicCommands
         var playlist = Bot.GetPlaylist(ctx.Guild);
         if (playlist != null)
             await playlist.AddAsync(track);
-        else throw new NullReferenceException("_JoinAsync wasn't create playlist instance for some reason");
+        else throw new ArgumentNullException("_JoinAsync wasn't create playlist instance for some reason");
     }
 
     public static async Task SearchAsync(CommonContext ctx, string query)
@@ -110,7 +110,7 @@ public class MusicCommands
         var playlist = Bot.GetPlaylist(ctx.Guild);
         if (playlist != null)
             playlist.SearchResults = tracks[..5];
-        else throw new NullReferenceException("_JoinAsync wasn't create playlist instance for some reason");
+        else throw new ArgumentNullException("_JoinAsync wasn't create playlist instance for some reason");
 
         var searchEmbed = Embeds.SearchEmbed(tracks, ctx.Member);
 
@@ -131,7 +131,7 @@ public class MusicCommands
                 return;
             }
             await ctx.RespondAsync(Embeds.UniEmbed($"{playlist.CurrentTrack.Title} пропущен.", ctx.Member));
-            await playlist.PlayNext((int)count);
+            await playlist.PlayNextAsync((int)count);
         }
     }
 

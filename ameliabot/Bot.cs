@@ -55,10 +55,15 @@ public class Bot
         SlashCommandsConfiguration commandsConfiguration = new();
 
         slashs = discord.UseSlashCommands();
-        slashs.RegisterCommands<MainCommands>(820240588556337164UL); // skipcq: CS-R1076
-        slashs.RegisterCommands<MusicSlashCommands>(820240588556337164UL); // skipcq: CS-R1076
-        slashs.RegisterCommands<ChatSlashCommands>(820240588556337164UL); // skipcq: CS-R1076
-
+        #if DEBUG
+            slashs.RegisterCommands<MainCommands>(820240588556337164UL); // skipcq: CS-R1076
+            slashs.RegisterCommands<MusicSlashCommands>(820240588556337164UL); // skipcq: CS-R1076
+            slashs.RegisterCommands<ChatSlashCommands>(820240588556337164UL); // skipcq: CS-R1076
+        #else
+            slashs.RegisterCommands<MainCommands>();
+            slashs.RegisterCommands<MusicSlashCommands>();
+            slashs.RegisterCommands<ChatSlashCommands>();
+        #endif
 
         CommandsNextConfiguration nextConfiguration = new()
         {
@@ -91,7 +96,17 @@ public class Bot
     public async Task RunAsync()
     {
         await this.discord.ConnectAsync();
-        await this.lavalink.ConnectAsync(this.lavaConfig);
+
+        do
+        {
+            try
+            {
+                await this.lavalink.ConnectAsync(this.lavaConfig);
+            }
+            catch { Thread.Sleep(2); }
+        }
+        while (this.lavalink.ConnectedNodes.Count == 0);
+        
         Lava = new(lavalink, lavalink.ConnectedNodes.Values.First());
     }
 

@@ -71,17 +71,17 @@ public static class ChatEvents
             return;
         }
 
-        if(content.StartsWith("я"))
+        if (content.StartsWith("я"))
         {
             Random rnd = new(DateTime.Now.Millisecond);
-            if(rnd.Next(100) > 60)
+            if (rnd.Next(100) > 60)
             {
                 await args.Message.RespondAsync($"Привет, {args.Author.Username}, я Амелия)");
                 return;
             }
         }
 
-        if(content == "а" || content == "a")
+        if (content == "а" || content == "a")
         {
             await args.Message.RespondAsync("б");
             return;
@@ -90,7 +90,7 @@ public static class ChatEvents
         if (content == "да" || content == "da")
         {
             Random rnd = new(DateTime.Now.Millisecond);
-            if(rnd.Next(100) >= 65)
+            if (rnd.Next(100) >= 65)
                 await args.Message.RespondAsync("пизда)");
             return;
         }
@@ -100,6 +100,14 @@ public static class ChatEvents
             Random rnd = new(DateTime.Now.Millisecond);
             if (rnd.Next(100) >= 65)
                 await args.Message.RespondAsync("пидора ответ!");
+            return;
+        }
+
+        if (content.Contains("люблю"))
+        {
+            Random rnd = new(DateTime.Now.Millisecond);
+            if (rnd.Next(100) >= 30)
+                await args.Message.RespondAsync("я тебя тоже люблю❤");
             return;
         }
     }

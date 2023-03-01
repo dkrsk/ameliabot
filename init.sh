@@ -1,7 +1,7 @@
 #!/bin/sh
 
-java -jar ./Lavalink/Lavalink.jar &
-sleep 15; ./ameliabot/bin/Release/net6.0/ameliabot $DTOKEN
+java -jar ./Lavalink.jar &
+sleep 20; ./ameliabot/bin/Debug/net6.0/ameliabot $DTOKEN
 
 wait -n
 

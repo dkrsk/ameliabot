@@ -3,32 +3,45 @@ using DSharpPlus.Lavalink;
 using DSharpPlus.Entities;
 
 using DnKR.AmeliaBot.Music;
+using System.Security.Cryptography.X509Certificates;
 
 namespace DnKR.AmeliaBot.BotCommands.MusicCommands;
 
+public struct JoinMessage
+{
+    public int Code => code;
+    public string Content => content;
+    private int code;
+    private string content;
+    public JoinMessage(int code, string content)
+    {
+        this.code = code;
+        this.content = content;
+    }
+}
 
 public static class MusicCommands
 {
-    private static async Task<string> TryJoinAsync(CommonContext ctx)
+    private static async Task<JoinMessage> TryJoinAsync(CommonContext ctx)
     {
         var lava = Bot.Lava;
-        var channel = ctx.Member.VoiceState.Channel;
+        DiscordChannel? channel = ctx.Member.VoiceState != null ? ctx.Member.VoiceState.Channel : null;
 
         if (!lava.lava.ConnectedNodes.Any())
         {
-            return "Ошибка lavalink";
+            return new(1,"Ошибка lavalink");
         }
 
         if (channel == null || channel.Type != ChannelType.Voice)
         {
-            return "Ты не подключен к голосовому каналу!";
+            return new(2,"Ты не подключен к голосовому каналу!");
         }
 
         if (lava.node.GetGuildConnection(ctx.Guild) != null)
         {
             if(lava.node.GetGuildConnection(ctx.Guild).Channel == channel)
             {
-                return "Ошибка lavalink";
+                return new(3,"Ошибка lavalink");
             }
             await lava.node.GetGuildConnection(ctx.Guild).DisconnectAsync();
         }
@@ -39,12 +52,12 @@ public static class MusicCommands
 
         conn.PlaybackFinished += MusicEvents.PlaybackFinished;
 
-        return $"Подключилась к {channel.Name}";
+        return new(0,$"Подключилась к {channel.Name}");
     }
 
     public static async Task JoinAsync(CommonContext ctx)
     {
-        await ctx.RespondAsync(Embeds.UniEmbed(await TryJoinAsync(ctx), ctx.Member));
+        await ctx.RespondAsync(Embeds.UniEmbed((await TryJoinAsync(ctx)).Content, ctx.Member));
     }
 
     public static async Task LeaveAsync(CommonContext ctx)
@@ -72,6 +85,13 @@ public static class MusicCommands
 
         var searchResult = await lava.node.Rest.GetTracksAsync(query);
 
+        var joinMessage = await TryJoinAsync(ctx);
+        if(joinMessage.Code != 0)
+        {
+            await ctx.RespondAsync(Embeds.UniEmbed(joinMessage.Content, ctx.Member));
+            return;
+        }
+
         if(searchResult.LoadResultType == LavalinkLoadResultType.LoadFailed || searchResult.LoadResultType == LavalinkLoadResultType.NoMatches)
         {
             await ctx.RespondAsync(Embeds.UniEmbed($"По запросу {query} ничего не нашлось.", ctx.Member));
@@ -80,8 +100,6 @@ public static class MusicCommands
 
         var track = searchResult.Tracks.First();
         await ctx.RespondAsync(Embeds.TrackAdded(track, ctx.Member));
-
-        await TryJoinAsync(ctx);
 
         var playlist = Bot.GetPlaylist(ctx.Guild);
         if (playlist != null)

@@ -18,7 +18,6 @@ public static class Embeds
         builder.WithThumbnail($"https://i3.ytimg.com/vi/{track.Identifier}/maxresdefault.jpg");
         builder.AddField("Автор: ", track.Author, false);
         builder.AddField("Длительность: ", track.Length.ToString(), false);
-        builder.AddField("Дальше: ", next != null ? next.Title : "Ничего", false);
 
         return builder.Build();
     }
@@ -47,20 +46,31 @@ public static class Embeds
             Url = "https://github.com/dkrsk"
         };
         string desc = string.Empty;
-        if (playlist != null && playlist.Count > 0)
+
+        if(playlist != null)
         {
-            builder.Title = $"Очередь для {playlist.Channel.Name}";
-            for (int i = 0; i < playlist.Count; i++)
+            var curTrack = playlist.CurrentTrack;
+            if (curTrack != null)
+                builder.AddField("Сейчас играет :musical_note:", $"[{curTrack.Title}]({curTrack.Uri})");
+            else
+                builder.AddField("Сейчас ничего не играет", "");
+
+
+            if (playlist.Count > 0)
             {
-                var track = playlist.At(i);
-                desc += $"{i + 1}. {track.Title} | {track.Length}\n";
+                builder.Title = $"Очередь для {playlist.Channel.Name}";
+                for (int i = 0; i < playlist.Count; i++)
+                {
+                    var track = playlist.At(i);
+                    desc += $"{i + 1}. {track.Title} | {track.Length}\n";
+                }
+            }
+            else
+            {
+                desc = "Дальше ничего нет!";
             }
         }
-        else
-        {
-            desc = "Очередь пуста!";
-        }
-
+        
         builder.WithDescription(desc);
         return builder.Build();
     }

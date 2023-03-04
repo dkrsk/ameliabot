@@ -86,6 +86,7 @@ public class Bot
         lavalink = discord.UseLavalink();
 
         discord.MessageCreated += ChatEvents.MessageCreated;
+        discord.VoiceStateUpdated += MusicEvents.VoiceStateUpdated;
     }
 
     ~Bot()

@@ -18,19 +18,34 @@ public static class MusicEvents
             await playlist.PlayNextAsync();
             return;
         }
-        if (lava.Node.GetGuildConnection(lava.Guild).Channel.Users.Count == 1)
-        {
-            await Bot.RemovePlaylistAsync(lava.Guild);
-        }
     }
 
     public static async Task VoiceStateUpdated(DiscordClient client, VoiceStateUpdateEventArgs args)
     {
-        if (!args.User.IsCurrent) return;
         var playlist = Bot.GetPlaylist(args.Guild);
         if (playlist != null)
         {
-            await Bot.RemovePlaylistAsync(args.Guild);
+            if (args.User.IsCurrent && args.After.Channel == null)
+            {
+                await Bot.RemovePlaylistAsync(args.Guild);
+                return;
+            }
+            if(args.Before.Channel.Users.Count == 1)
+            {
+                Thread checkAndLeave = new(async () =>
+                {
+                    Thread.Sleep(15000);
+                    var users = args.Before.Channel.Users;
+                    if(users.Count == 1 && users[0].IsCurrent)
+                    {
+                        await Bot.RemovePlaylistAsync(args.Guild);
+                        await Bot.Lava.node.GetGuildConnection(args.Guild).DisconnectAsync();
+                        return;
+                    }
+                });
+
+                checkAndLeave.Start();
+            }
         }
     }
 

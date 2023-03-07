@@ -78,7 +78,7 @@ public static class MusicCommands
         await ctx.RespondAsync(Embeds.UniEmbed("Пока!", ctx.Member));
     }
 
-    public static async Task PlayAsync(CommonContext ctx, string query)
+    public static async Task PlayAsync(CommonContext ctx, string query, bool playTop)
     {
         var lava = Bot.Lava;
 
@@ -102,8 +102,13 @@ public static class MusicCommands
 
         var playlist = Bot.GetPlaylist(ctx.Guild);
         if (playlist != null)
-            await playlist.AddAsync(track);
-        else throw new ArgumentNullException("_JoinAsync wasn't create playlist instance for some reason");
+        {
+            if (playTop)
+                await playlist.AddTopAsync(track);
+            else
+                await playlist.AddAsync(track);
+        }
+        else throw new NullReferenceException($"{nameof(TryJoinAsync)} wasn't create playlist instance for some reason");
     }
 
     public static async Task SearchAsync(CommonContext ctx, string query)
@@ -165,10 +170,10 @@ public static class MusicCommands
     public static async Task RemoveAsync(CommonContext ctx, long position)
     {
         var playlist = Bot.GetPlaylist(ctx.Guild);
-        if(playlist != null && playlist.Count < position)
+        if(playlist != null && playlist.Count > position - 1)
         {
-            playlist.Remove((int)position);
-            await ctx.RespondAsync(Embeds.UniEmbed($"`{position}.` {playlist.CurrentTrack} удален.", ctx.Member));
+            await ctx.RespondAsync(Embeds.UniEmbed($"`{position}.` {playlist[(int)position-1].Title} удален.", ctx.Member));
+            playlist.Remove((int)position - 1);
         }
         else
         {
@@ -179,11 +184,18 @@ public static class MusicCommands
     public static async Task LoopAsync(CommonContext ctx)
     {
         var playlist = Bot.GetPlaylist(ctx.Guild);
-        if(playlist != null && playlist.CurrentTrack != null)
+        if (playlist != null)
         {
-            playlist.ChangeRepeat();
-            await ctx.RespondAsync(Embeds.UniEmbed($"Трек {(playlist.IsRepeat ? "зациклен" : "расциклен")}", ctx.Member));
+            if (playlist.CurrentTrack != null)
+            {
+                playlist.ChangeRepeat();
+                await ctx.RespondAsync(Embeds.UniEmbed($"Трек {(playlist.IsRepeat ? "зациклен" : "расциклен")}", ctx.Member));
+            }
+            else
+                await ctx.RespondAsync(Embeds.UniEmbed("Но очередь пуста!", ctx.Member));
         }
+        else
+            await ctx.RespondAsync(Embeds.UniEmbed("Но я никуда не подключена!", ctx.Member));
     }
 
 

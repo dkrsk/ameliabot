@@ -46,6 +46,15 @@ public class GuildPlaylist
         }
     }
 
+    public async Task AddTopAsync(LavalinkTrack track)
+    {
+        playlist.Prepend(track);
+        if(currentTrack != null || Any())
+        {
+            await PlayNextAsync();
+        }
+    }
+
     public LavalinkTrack? PopNext()
     {
         if (playlist.Any())
@@ -61,7 +70,7 @@ public class GuildPlaylist
     {
         if(playlist.Any())
         {
-            return playlist[0];
+            return playlist.First();
         }
         return null;
     }
@@ -80,6 +89,7 @@ public class GuildPlaylist
         }
 
         LavalinkTrack? track;
+        IsRepeat = false;
 
         do
         {
@@ -141,6 +151,13 @@ public class GuildPlaylist
         if(index <= Count-1)
             return playlist[index];
         else throw new ArgumentOutOfRangeException(nameof(index));
+    }
+    public LavalinkTrack this[int index]
+    {
+        get
+        {
+            return playlist[index];
+        }
     }
 
     public void ChangeRepeat()

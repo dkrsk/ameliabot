@@ -20,7 +20,13 @@ public class MusicNextCommands : BaseCommandModule
     [Command("play"), Aliases("p", "з", "здфн")]
     public async Task PlayCommandAsync(CommandContext ctx, [RemainingText] string query)
     {
-        await MusicCommands.PlayAsync(new CommonContext(ctx), query);
+        await MusicCommands.PlayAsync(new CommonContext(ctx), query, false);
+    }
+    
+    [Command("playtop"), Aliases("pt", "зе", "здфнещз")]
+    public async Task PlayTopCommandAsync(CommandContext ctx, [RemainingText] string query)
+    {
+        await MusicCommands.PlayAsync(new CommonContext(ctx), query, true);
     }
 
     [Command("search"), Aliases("sc", "ыс", "ыуфкср")]

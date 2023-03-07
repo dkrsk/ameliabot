@@ -19,7 +19,13 @@ public class MusicSlashCommands : ApplicationCommandModule
     [SlashCommand("play", "Добавить трек в очередь")]
     public async Task PlayCommandAsync(InteractionContext ctx, [Option("название", "Название трека")] string query)
     {
-        await MusicCommands.PlayAsync(new CommonContext(ctx), query);
+        await MusicCommands.PlayAsync(new CommonContext(ctx), query, false);
+    }
+    
+    [SlashCommand("playtop", "Добавить трек в начало очереди")]
+    public async Task PlayTopCommandAsync(InteractionContext ctx, [Option("название", "Название трека")] string query)
+    {
+        await MusicCommands.PlayAsync(new CommonContext(ctx), query, true);
     }
 
     [SlashCommand("search", "Выбрать трек из первых 10 по поиску")]

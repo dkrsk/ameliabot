@@ -18,13 +18,13 @@ public class MusicNextCommands : BaseCommandModule
     }
 
     [Command("play"), Aliases("p", "з", "здфн")]
-    public async Task PlayCommandAsync(CommandContext ctx, string query)
+    public async Task PlayCommandAsync(CommandContext ctx, [RemainingText] string query)
     {
         await MusicCommands.PlayAsync(new CommonContext(ctx), query);
     }
 
     [Command("search"), Aliases("sc", "ыс", "ыуфкср")]
-    public async Task SearchCommandAsync(CommandContext ctx, string query)
+    public async Task SearchCommandAsync(CommandContext ctx,[RemainingText] string query)
     {
         await MusicCommands.SearchAsync(new CommonContext(ctx), query);
     }

@@ -3,7 +3,6 @@ using DSharpPlus.Lavalink;
 using DSharpPlus.Entities;
 
 using DnKR.AmeliaBot.Music;
-using System.Security.Cryptography.X509Certificates;
 
 namespace DnKR.AmeliaBot.BotCommands.MusicCommands;
 
@@ -37,13 +36,13 @@ public static class MusicCommands
             return new(2,"Ты не подключен к голосовому каналу!");
         }
 
-        if (lava.node.GetGuildConnection(ctx.Guild) != null)
+        var guild = lava.node.GetGuildConnection(ctx.Guild);
+        if (guild != null)
         {
-            if(lava.node.GetGuildConnection(ctx.Guild).Channel == channel)
+            if(lava.node.GetGuildConnection(ctx.Guild).Channel != channel)
             {
-                return new(3,"Ошибка lavalink");
+                await lava.node.GetGuildConnection(ctx.Guild).DisconnectAsync();
             }
-            await lava.node.GetGuildConnection(ctx.Guild).DisconnectAsync();
         }
 
         var conn = await lava.node.ConnectAsync(channel);

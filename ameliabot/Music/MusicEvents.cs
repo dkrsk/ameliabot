@@ -22,6 +22,7 @@ public static class MusicEvents
 
     public static async Task VoiceStateUpdated(DiscordClient client, VoiceStateUpdateEventArgs args)
     {
+        if (args.Before == null) return;
         var playlist = Bot.GetPlaylist(args.Guild);
         if (playlist != null)
         {

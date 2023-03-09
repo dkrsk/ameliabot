@@ -55,6 +55,11 @@ public class GuildPlaylist
         }
     }
 
+    public void AddMany(LavalinkTrack[] tracks)
+    {
+        playlist.AddRange(tracks);
+    }
+
     public LavalinkTrack? PopNext()
     {
         if (playlist.Any())

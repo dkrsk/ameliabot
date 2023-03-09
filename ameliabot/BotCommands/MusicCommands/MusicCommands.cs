@@ -113,6 +113,9 @@ public static class MusicCommands
                 await playlist.AddTopAsync(track);
             else
                 await playlist.AddAsync(track);
+
+            if (query.Contains("playlist?list"))
+                playlist.AddMany(searchResult.Tracks.ToArray()[1..]);
         }
         else throw new NullReferenceException($"{nameof(TryJoinAsync)} wasn't create playlist instance for some reason");
     }

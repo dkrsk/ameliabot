@@ -47,14 +47,9 @@ public static class Embeds
         };
         string desc = string.Empty;
 
-        if(playlist != null)
+        if(playlist != null && playlist.CurrentTrack != null)
         {
-            var curTrack = playlist.CurrentTrack;
-            if (curTrack != null)
-                builder.AddField("Сейчас играет :musical_note:", $"[{curTrack.Title}]({curTrack.Uri})");
-            else
-                builder.AddField("Сейчас ничего не играет", "");
-
+            builder.AddField("Сейчас играет :musical_note:", $"[{playlist.CurrentTrack.Title}]({playlist.CurrentTrack.Uri})");
 
             if (playlist.Count > 0)
             {
@@ -69,6 +64,10 @@ public static class Embeds
             {
                 desc = "Дальше ничего нет!";
             }
+        }
+        else
+        {
+            desc = "Очередь пуста!";
         }
         
         builder.WithDescription(desc);

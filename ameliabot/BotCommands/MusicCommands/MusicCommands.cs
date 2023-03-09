@@ -3,6 +3,7 @@ using DSharpPlus.Lavalink;
 using DSharpPlus.Entities;
 
 using DnKR.AmeliaBot.Music;
+using System;
 
 namespace DnKR.AmeliaBot.BotCommands.MusicCommands;
 
@@ -36,12 +37,16 @@ public static class MusicCommands
             return new(2,"Ты не подключен к голосовому каналу!");
         }
 
-        var guild = lava.node.GetGuildConnection(ctx.Guild);
-        if (guild != null)
+        var guildConnection = lava.node.GetGuildConnection(ctx.Guild);
+        if (guildConnection != null)
         {
-            if(lava.node.GetGuildConnection(ctx.Guild).Channel != channel)
+            if(guildConnection.Channel != channel)
             {
-                await lava.node.GetGuildConnection(ctx.Guild).DisconnectAsync();
+                await guildConnection.DisconnectAsync(false);
+            }
+            else
+            {
+                return new(0, "Я уже сюда подключена)");
             }
         }
 
@@ -64,7 +69,6 @@ public static class MusicCommands
         var lava = Bot.Lava;
         var conn = lava.node.GetGuildConnection(ctx.Guild);
 
-        await Bot.RemovePlaylistAsync(ctx.Guild);
 
         if (conn == null)
         {
@@ -72,8 +76,10 @@ public static class MusicCommands
             return;
         }
 
+        await Bot.RemovePlaylistAsync(ctx.Guild);
+
+        await conn.StopAsync();
         await conn.DisconnectAsync();
-            
 
         await ctx.RespondAsync(Embeds.UniEmbed("Пока!", ctx.Member));
     }
@@ -120,6 +126,13 @@ public static class MusicCommands
 
         var searchResult = await lava.node.Rest.GetTracksAsync(query);
 
+        var joinMessage = await TryJoinAsync(ctx);
+        if (joinMessage.Code != 0)
+        {
+            await ctx.RespondAsync(Embeds.UniEmbed(joinMessage.Content, ctx.Member));
+            return;
+        }
+
         if (searchResult.LoadResultType == LavalinkLoadResultType.LoadFailed || searchResult.LoadResultType == LavalinkLoadResultType.NoMatches)
         {
             await ctx.RespondAsync(Embeds.UniEmbed($"По запросу {query} ничего не нашлось.", ctx.Member));
@@ -132,7 +145,7 @@ public static class MusicCommands
         var playlist = Bot.GetPlaylist(ctx.Guild);
         if (playlist != null)
             playlist.SearchResults = tracks[..5];
-        else throw new ArgumentNullException("_JoinAsync wasn't create playlist instance for some reason");
+        else throw new ArgumentNullException($"{nameof(TryJoinAsync)} wasn't create playlist instance for some reason");
 
         var searchEmbed = Embeds.SearchEmbed(tracks, ctx.Member);
 
@@ -145,26 +158,25 @@ public static class MusicCommands
     public static async Task SkipAsync(CommonContext ctx, long count)
     {
         var playlist = Bot.GetPlaylist(ctx.Guild);
-        if(playlist != null)
+        if(playlist != null && playlist.CurrentTrack != null)
         {
-            if(playlist.CurrentTrack == null)
-            {
-                await ctx.RespondAsync(Embeds.UniEmbed("Ничего не воспроизводится!", ctx.Member));
-                return;
-            }
             await ctx.RespondAsync(Embeds.UniEmbed($"{playlist.CurrentTrack.Title} пропущен.", ctx.Member));
             await playlist.PlayNextAsync((int)count);
+            return;
         }
+        await ctx.RespondAsync(Embeds.UniEmbed("Ничего не воспроизводится!", ctx.Member));
     }
 
     public static async Task QueueAsync(CommonContext ctx)
     {
         if(ctx.DeferAsync != null) await ctx.DeferAsync();
         var playlist = Bot.GetPlaylist(ctx.Guild);
+        var emb = Embeds.QueueEmbed(playlist, ctx.Member);
+    
         if (ctx.EditResponseAsync != null)
-            await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(Embeds.QueueEmbed(playlist, ctx.Member)));
+            await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(emb));
         else
-            await ctx.RespondAsync(Embeds.QueueEmbed(playlist, ctx.Member));
+            await ctx.RespondAsync(emb);
     }
 
     public static async Task RemoveAsync(CommonContext ctx, long position)

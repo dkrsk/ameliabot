@@ -133,7 +133,6 @@ public class Bot
     {
         if (Playlists.TryGetValue(guild, out GuildPlaylist? playlist))
         {
-            await playlist.Connection.StopAsync();
             Playlists.Remove(guild);
         }
         else return;        

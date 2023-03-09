@@ -26,7 +26,7 @@ public static class MusicEvents
         var playlist = Bot.GetPlaylist(args.Guild);
         if (playlist != null)
         {
-            if (args.User.IsCurrent && args.After.Channel == null)
+            if (args.User.IsCurrent && Bot.Lava.node.GetGuildConnection(args.Guild) != null && args.After.Channel == null)
             {
                 await Bot.RemovePlaylistAsync(args.Guild);
                 return;

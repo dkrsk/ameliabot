@@ -1,6 +1,6 @@
 ﻿using DSharpPlus;
 using DSharpPlus.EventArgs;
-
+using System.Globalization;
 
 namespace DnKR.AmeliaBot.BotCommands.ChatCommands;
 
@@ -49,7 +49,7 @@ public static class ChatEvents
         if (args.Author.IsBot)
             return;
 
-        string content = args.Message.Content.ToLower();
+        string content = args.Message.Content.ToLower(CultureInfo.GetCultureInfo("ru"));
 
         if (content.Split().Any(s => shutup.Contains(s)))
         {

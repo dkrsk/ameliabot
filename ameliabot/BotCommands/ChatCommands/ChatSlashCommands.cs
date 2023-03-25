@@ -1,6 +1,6 @@
-﻿using DnKR.AmeliaBot.BotCommands.ChatCommands;
-using DnKR.AmeliaBot;
-using DSharpPlus.SlashCommands;
+﻿using DSharpPlus.SlashCommands;
+
+namespace DnKR.AmeliaBot.BotCommands.ChatCommands;
 
 public class ChatSlashCommands : ApplicationCommandModule
 {

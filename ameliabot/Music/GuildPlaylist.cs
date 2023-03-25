@@ -159,9 +159,9 @@ public class GuildPlaylist
 
     public LavalinkTrack At(int index)
     {
-        if(index <= Count-1)
-            return playlist[index];
-        else throw new ArgumentOutOfRangeException(nameof(index));
+        if(index > Count-1)
+            throw new ArgumentOutOfRangeException(nameof(index));
+        return playlist[index];
     }
     public LavalinkTrack this[int index] => playlist[index];
 

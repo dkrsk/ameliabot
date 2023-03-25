@@ -19,7 +19,7 @@ public static class ChatCommands
 
     public static async Task FlipCoinAsync(CommonContext ctx)
     {
-        Random rand = new Random(DateTime.Now.Millisecond);
+        Random rand = new(DateTime.Now.Millisecond);
         if(rand.Next(2) == 1)
         {
             await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed(":coin: Решка!", ctx.Member));
@@ -32,7 +32,7 @@ public static class ChatCommands
 
     public static async Task GetRandomAsync(CommonContext ctx, int min, int max)
     {
-        Random rand = new Random(DateTime.Now.Millisecond);
+        Random rand = new(DateTime.Now.Millisecond);
         await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"{ctx.Member.DisplayName} получает число {rand.Next(min, max)}!", ctx.Member));
     }
 

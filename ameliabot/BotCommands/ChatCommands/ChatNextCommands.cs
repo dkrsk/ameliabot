@@ -1,7 +1,7 @@
-﻿using DnKR.AmeliaBot.BotCommands.ChatCommands;
-using DnKR.AmeliaBot;
-using DSharpPlus.CommandsNext.Attributes;
+﻿using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.CommandsNext;
+
+namespace DnKR.AmeliaBot.BotCommands.ChatCommands;
 
 public class ChatNextCommands : BaseCommandModule
 {

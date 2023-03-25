@@ -1,6 +1,7 @@
-﻿using DSharpPlus;
+using DSharpPlus;
 using DSharpPlus.Lavalink;
 using DSharpPlus.Entities;
+using System.Text.RegularExpressions;
 
 using DnKR.AmeliaBot.Music;
 using System;
@@ -88,7 +89,14 @@ public static class MusicCommands
     {
         var lava = Bot.Lava;
 
-        var searchResult = await lava.node.Rest.GetTracksAsync(query);
+        Regex ytRegex = new(@"^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$");
+        LavalinkLoadResult searchResult;
+
+        if (ytRegex.IsMatch(query))
+        {
+            searchResult = await lava.node.Rest.GetTracksAsync(query, LavalinkSearchType.Plain);
+        }
+        else searchResult = await lava.node.Rest.GetTracksAsync(query);
 
         var joinMessage = await TryJoinAsync(ctx);
         if(joinMessage.Code != 0)

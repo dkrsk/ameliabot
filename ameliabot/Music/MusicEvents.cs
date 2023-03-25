@@ -69,7 +69,7 @@ public static class MusicEvents
                     playlist.SearchResults = new LavalinkTrack?[5];
 
                     await args.Message.DeleteAsync();
-                    await args.Interaction.Channel.SendMessageAsync(Embeds.TrackAdded(track, (DiscordMember)args.User));
+                    await args.Interaction.Channel.SendMessageAsync(MusicEmbeds.TrackAdded(track, (DiscordMember)args.User));
                 }
             }
         }

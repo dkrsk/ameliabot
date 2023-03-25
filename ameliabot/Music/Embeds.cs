@@ -4,7 +4,7 @@ using DSharpPlus.Lavalink;
 
 namespace DnKR.AmeliaBot.Music;
 
-public static class Embeds
+public static class MusicEmbeds
 {
     public static DiscordEmbed NowPlaying(LavalinkTrack track, LavalinkTrack? next)
     {
@@ -98,15 +98,5 @@ public static class Embeds
         };
 
         return Tuple.Create(embedBuilder.Build(), buttons);
-    }
-
-    public static DiscordEmbed UniEmbed(string query, DiscordMember reqby)
-    {
-        var builder = new DiscordEmbedBuilder()
-        {
-            Color = reqby.Color,
-            Title = query
-        };
-        return builder.Build();
     }
 }

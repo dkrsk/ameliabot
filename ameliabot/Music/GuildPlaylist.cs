@@ -129,7 +129,7 @@ public class GuildPlaylist
             {
                 await message.DeleteAsync();
             }
-            message = await channel.SendMessageAsync(Embeds.NowPlaying(currentTrack, GetNext()));
+            message = await channel.SendMessageAsync(MusicEmbeds.NowPlaying(currentTrack, GetNext()));
             return;
         }
         if(message != null)

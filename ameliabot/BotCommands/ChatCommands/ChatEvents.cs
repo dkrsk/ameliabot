@@ -44,7 +44,7 @@ public static class ChatEvents
         "закрой рот"
     };
 
-    public static async Task MessageCreated(DiscordClient client, MessageCreateEventArgs args)
+    public static async Task MessageCreated(DiscordClient client, MessageCreateEventArgs args) //skipcq: CS-R1073
     {
         if (args.Author.IsBot)
             return;

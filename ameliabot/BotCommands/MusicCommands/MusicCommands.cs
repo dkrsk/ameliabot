@@ -226,7 +226,7 @@ public static class MusicCommands
         var playlist = Bot.GetPlaylist(ctx.Guild);
         if(playlist != null)
         {
-            await playlist.Clear();
+            await playlist.ClearAsync();
             await ctx.RespondAsync(Embeds.UniEmbed("Очередь очищена!", ctx.Member));
         }
         else

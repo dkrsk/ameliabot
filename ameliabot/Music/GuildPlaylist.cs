@@ -151,7 +151,7 @@ public class GuildPlaylist
         }
     }
 
-    public async Task Clear()
+    public async Task ClearAsync()
     {
         playlist.Clear();
         await connection.StopAsync();
@@ -163,13 +163,7 @@ public class GuildPlaylist
             return playlist[index];
         else throw new ArgumentOutOfRangeException(nameof(index));
     }
-    public LavalinkTrack this[int index]
-    {
-        get
-        {
-            return playlist[index];
-        }
-    }
+    public LavalinkTrack this[int index] => playlist[index];
 
     public void ChangeRepeat()
     {

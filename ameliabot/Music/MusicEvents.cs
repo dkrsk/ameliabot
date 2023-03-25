@@ -9,7 +9,7 @@ namespace DnKR.AmeliaBot.Music;
 
 public static class MusicEvents
 {
-    public static async Task PlaybackFinished(LavalinkGuildConnection lava, TrackFinishEventArgs args)
+    public static async Task PlaybackFinished(LavalinkGuildConnection lava, TrackFinishEventArgs args) //skipcq: CS-R1073
     {
         if (lava.Channel == null) return;
         var playlist = Bot.GetPlaylist(lava.Guild);
@@ -20,7 +20,7 @@ public static class MusicEvents
         }
     }
 
-    public static async Task VoiceStateUpdated(DiscordClient client, VoiceStateUpdateEventArgs args)
+    public static async Task VoiceStateUpdated(DiscordClient client, VoiceStateUpdateEventArgs args) //skipcq: CS-R1073
     {
         if (args.Before == null) return;
         var playlist = Bot.GetPlaylist(args.Guild);
@@ -50,7 +50,7 @@ public static class MusicEvents
         }
     }
 
-    public static async Task ButtonSearchClicked(DiscordClient client, ComponentInteractionCreateEventArgs args)
+    public static async Task ButtonSearchClicked(DiscordClient client, ComponentInteractionCreateEventArgs args) //skipcq: CS-R1073
     {
         if(!args.Id.StartsWith("btn_srch"))
         {

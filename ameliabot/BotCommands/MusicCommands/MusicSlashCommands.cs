@@ -57,4 +57,10 @@ public class MusicSlashCommands : ApplicationCommandModule
     {
         await MusicCommands.LoopAsync(new CommonContext(ctx));
     }
+
+    [SlashCommand("clear", "Очистить очередь")]
+    public async Task ClearCommandAsync(InteractionContext ctx)
+    {
+        await MusicCommands.ClearAsync(new CommonContext(ctx));
+    }
 }

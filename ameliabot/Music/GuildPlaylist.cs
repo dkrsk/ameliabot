@@ -151,6 +151,12 @@ public class GuildPlaylist
         }
     }
 
+    public async Task Clear()
+    {
+        playlist.Clear();
+        await connection.StopAsync();
+    }
+
     public LavalinkTrack At(int index)
     {
         if(index <= Count-1)

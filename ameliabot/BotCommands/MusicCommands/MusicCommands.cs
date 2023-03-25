@@ -1,4 +1,4 @@
-using DSharpPlus;
+﻿using DSharpPlus;
 using DSharpPlus.Lavalink;
 using DSharpPlus.Entities;
 using System.Text.RegularExpressions;
@@ -221,5 +221,16 @@ public static class MusicCommands
             await ctx.RespondAsync(Embeds.UniEmbed("Но я никуда не подключена!", ctx.Member));
     }
 
+    public static async Task ClearAsync(CommonContext ctx)
+    {
+        var playlist = Bot.GetPlaylist(ctx.Guild);
+        if(playlist != null)
+        {
+            await playlist.Clear();
+            await ctx.RespondAsync(Embeds.UniEmbed("Очередь очищена!", ctx.Member));
+        }
+        else
+            await ctx.RespondAsync(Embeds.UniEmbed("Но я никуда не подключена!", ctx.Member));
+    }
 
 }

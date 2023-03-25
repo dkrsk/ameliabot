@@ -58,4 +58,10 @@ public class MusicNextCommands : BaseCommandModule
     {
         await MusicCommands.LoopAsync(new CommonContext(ctx));
     }
+
+    [Command("clear"), Aliases("cl", "сд", "сдуфк")]
+    public async Task ClearCommandAsync(CommandContext ctx)
+    {
+        await MusicCommands.ClearAsync(new CommonContext(ctx));
+    }
 }

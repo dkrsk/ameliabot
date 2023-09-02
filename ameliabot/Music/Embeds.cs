@@ -47,7 +47,8 @@ public static class MusicEmbeds
         };
         string desc = string.Empty;
 
-        if(playlist != null && playlist.CurrentTrack != null)
+
+        if(playlist?.CurrentTrack != null)
         {
             builder.AddField("Сейчас играет :musical_note:", $"[{playlist.CurrentTrack.Title}]({playlist.CurrentTrack.Uri})");
 

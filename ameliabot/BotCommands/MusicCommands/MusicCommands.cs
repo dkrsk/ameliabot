@@ -169,7 +169,7 @@ public static class MusicCommands
     public static async Task SkipAsync(CommonContext ctx, long count)
     {
         var playlist = Bot.GetPlaylist(ctx.Guild);
-        if(playlist != null && playlist.CurrentTrack != null)
+        if(playlist?.CurrentTrack != null)
         {
             await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"{playlist.CurrentTrack.Title} пропущен.", ctx.Member));
             await playlist.PlayNextAsync((int)count);
@@ -193,7 +193,7 @@ public static class MusicCommands
     public static async Task RemoveAsync(CommonContext ctx, long position)
     {
         var playlist = Bot.GetPlaylist(ctx.Guild);
-        if(playlist != null && playlist.Count > position - 1)
+        if(playlist?.Count > position - 1)
         {
             await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"`{position}.` {playlist[(int)position-1].Title} удален.", ctx.Member));
             playlist.Remove((int)position - 1);
@@ -232,5 +232,4 @@ public static class MusicCommands
         else
             await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed("Но я никуда не подключена!", ctx.Member));
     }
-
 }

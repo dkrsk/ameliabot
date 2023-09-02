@@ -48,7 +48,7 @@ public class GuildPlaylist
 
     public async Task AddTopAsync(LavalinkTrack track)
     {
-        playlist.Prepend(track);
+        playlist.Insert(0, track);
         if(currentTrack != null || Any())
         {
             await PlayNextAsync();

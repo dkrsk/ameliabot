@@ -10,7 +10,7 @@ public static class MusicEmbeds
     {
         var builder = new DiscordEmbedBuilder()
         {
-            Color = Bot.Client.CurrentUser.BannerColor ?? DiscordColor.Gray,
+            Color = Bot.Client.CurrentUser.BannerColor ?? DiscordColor.Blue,
             Title = "Сейчас играет :musical_note:",
             Url = track.Uri.ToString(),
             Description = $"[{track.Title}]({track.Uri})"

@@ -59,15 +59,28 @@ public static class ChatEvents
 
         if (content.Split().Any(s => censor.Contains(s)))
         {
-            await args.Message.RespondAsync($"Слышь, {args.Author.Username}," +
-                "что-то мне не нравится как ты со мной разговариваешь. " +
-                "\nСкладывается впечатление что ты реально контуженный, обиженный жизнью имбицил )) " +
-                "Могу тебе и в глаза сказать, готов приехать послушать? ) " +
-                "\nВся та хуйня тобою написанное это простое пиздабольство, рембо ты комнатный) )" +
-                "от того что ты много написал, жизнь твоя лучше не станет) ) " +
-                "пиздеть не мешки ворочить, много вас таких по весне оттаяло )) " +
-                "Про таких как ты говорят: Мама не хотела, папа не старался) " +
-                "\nВникай в моё послание тебе< постарайся проанализировать и сделать выводы для себя)");
+            Random rnd = new(DateTime.UtcNow.Millisecond);
+            if (rnd.Next(100) > 65) return;
+            
+            string answer;
+            if (rnd.Next(100) <= 50)
+            {
+                answer = $"Слышь, {args.Author.Username}," +
+                         "что-то мне не нравится как ты со мной разговариваешь. " +
+                         "\nСкладывается впечатление что ты реально контуженный, обиженный жизнью имбицил )) " +
+                         "Могу тебе и в глаза сказать, готов приехать послушать? ) " +
+                         "\nВся та хуйня тобою написанное это простое пиздабольство, рембо ты комнатный) )" +
+                         "от того что ты много написал, жизнь твоя лучше не станет) ) " +
+                         "пиздеть не мешки ворочить, много вас таких по весне оттаяло )) " +
+                         "Про таких как ты говорят: Мама не хотела, папа не старался) " +
+                         "\nВникай в моё послание тебе< постарайся проанализировать и сделать выводы для себя)";
+            }
+            else
+            {
+                answer = "сударь, извольте выражаться без нецензурной брани. или иди нахуй сын шлюхи";
+            }
+
+            await args.Message.RespondAsync(answer);
             return;
         }
 
@@ -79,35 +92,36 @@ public static class ChatEvents
             return;
         }
 
-        if (content.StartsWith("я"))
+        if (content.StartsWith("я "))
         {
             Random rnd = new(DateTime.UtcNow.Millisecond);
             if (rnd.Next(100) <= 40)
-                await args.Message.RespondAsync($"Привет, {args.Author.Username}, я Амелия)");
+                await args.Message.RespondAsync($"Привет, {content.Substring(1, content.Length - 1)}, я Амелия)");
             return;
         }
 
-        if (content == "а" || content == "a")
+        switch (content)
         {
-            await args.Message.RespondAsync("б");
-            return;
+            case "а":
+            case "a":
+                await args.Message.RespondAsync("б");
+                return;
+            case "да":
+            case "da":
+            {
+                Random rnd = new(DateTime.UtcNow.Millisecond);
+                if (rnd.Next(100) <= 35)
+                    await args.Message.RespondAsync("пизда)");
+                return;
+            }
+            case "нет":
+            case "net":
+            {
+                Random rnd = new(DateTime.UtcNow.Millisecond);
+                if (rnd.Next(100) <= 35)
+                    await args.Message.RespondAsync("пидора ответ!");
+                return;
+            }
         }
-
-        if (content == "да" || content == "da")
-        {
-            Random rnd = new(DateTime.UtcNow.Millisecond);
-            if (rnd.Next(100) <= 35)
-                await args.Message.RespondAsync("пизда)");
-            return;
-        }
-
-        if (content == "нет" || content == "net")
-        {
-            Random rnd = new(DateTime.UtcNow.Millisecond);
-            if (rnd.Next(100) <= 35)
-                await args.Message.RespondAsync("пидора ответ!");
-            return;
-        }
-
     }
 }

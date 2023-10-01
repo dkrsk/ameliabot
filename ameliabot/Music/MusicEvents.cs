@@ -3,7 +3,6 @@ using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Lavalink;
 using DSharpPlus.Lavalink.EventArgs;
-using Emzi0767.Utilities;
 
 namespace DnKR.AmeliaBot.Music;
 

@@ -1,6 +1,6 @@
 FROM alpine
 RUN apk update && apk upgrade && \
-	apk add dotnet6-sdk openjdk11 curl build-base gcompat
+	apk add dotnet7-sdk openjdk17 curl build-base gcompat
 COPY . ./app
 WORKDIR /app
 

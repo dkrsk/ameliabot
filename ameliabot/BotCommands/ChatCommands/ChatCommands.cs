@@ -10,11 +10,19 @@ public static class ChatCommands
         if (ctx.DeferAsync != null)
             await ctx.DeferAsync(false);
 
-        var pasta = await PastaParser.GetFilteredPastaAsync("ASCII", "стрим", "стример", "саб", "твич");
+        string? pasta;
+        try
+        {
+            pasta = (await PastaParser.GetFilteredPastaAsync("ASCII", "стрим", "стример", "саб", "твич")).Text;
+        }
+        catch (Exception e)
+        {
+            pasta = "Админ copypastas.ru лучший!!!!)))))";
+        }
         if (ctx.EditResponseAsync != null)
-            await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent(pasta.Text));
+            await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent(pasta));
         else
-            await ctx.RespondTextAsync(pasta.Text);
+            await ctx.RespondTextAsync(pasta);
     }
 
     public static async Task FlipCoinAsync(CommonContext ctx)

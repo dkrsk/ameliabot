@@ -4,6 +4,7 @@ RUN apk update && apk upgrade && \
 COPY . ./app
 WORKDIR /app
 
+RUN dotnet restore
 RUN dotnet build -c Debug 
 #idk why Release was't work
 

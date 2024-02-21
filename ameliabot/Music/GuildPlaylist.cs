@@ -12,6 +12,7 @@ public class GuildPlaylist
     public LavalinkTrack?[] SearchResults { get => searchList; set => searchList = value; } 
     public int Count => playlist.Count;
     public bool IsRepeat { get; private set; } = false;
+    public bool IsPaused { get; private set; } = false;
         
 
     private readonly LavaEntities lava;
@@ -168,5 +169,18 @@ public class GuildPlaylist
     public void ChangeRepeat()
     {
         IsRepeat = !IsRepeat;
+    }
+
+    public async Task ControlPauseAsync()
+    {
+        if (IsPaused)
+        {
+            await connection.ResumeAsync();
+            IsPaused = false;
+            return;
+        }
+
+        await connection.PauseAsync();
+        IsPaused = true;
     }
 }

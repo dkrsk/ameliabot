@@ -1,6 +1,7 @@
 ﻿using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.Lavalink;
+using DnKR.AmeliaBot;
 
 namespace DnKR.AmeliaBot.Music;
 
@@ -100,4 +101,7 @@ public static class MusicEmbeds
 
         return Tuple.Create(embedBuilder.Build(), buttons);
     }
+
+    public static DiscordEmbed NotConnectedEmbed(DiscordMember reqby) => GlobalEmbeds.UniEmbed("Но я никуда не подключена!", reqby);
+    public static DiscordEmbed EmptyQueueEmbed(DiscordMember reqby) => GlobalEmbeds.UniEmbed("Ничего не воспроизводится!", reqby);
 }

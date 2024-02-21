@@ -4,7 +4,6 @@ using DSharpPlus.Entities;
 using System.Text.RegularExpressions;
 
 using DnKR.AmeliaBot.Music;
-using System;
 
 namespace DnKR.AmeliaBot.BotCommands.MusicCommands;
 
@@ -21,7 +20,7 @@ public struct JoinMessage
     }
 }
 
-public static class MusicCommands
+public static partial class MusicCommands
 {
     private static async Task<JoinMessage> TryJoinAsync(CommonContext ctx)
     {
@@ -73,7 +72,7 @@ public static class MusicCommands
 
         if (conn == null)
         {
-            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed("Но я никуда не подключена!", ctx.Member));
+            await ctx.RespondEmbedAsync(MusicEmbeds.NotConnectedEmbed(ctx.Member));
             return;
         }
 
@@ -89,7 +88,13 @@ public static class MusicCommands
     {
         var lava = Bot.Lava;
 
-        Regex ytRegex = new(@"^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$");
+        if (query == "pause")
+        {
+            await PauseAsync(ctx);
+            return;
+        }
+
+        Regex ytRegex = YtRegex();
         LavalinkLoadResult searchResult;
 
         if (ytRegex.IsMatch(query))
@@ -175,7 +180,7 @@ public static class MusicCommands
             await playlist.PlayNextAsync((int)count);
             return;
         }
-        await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed("Ничего не воспроизводится!", ctx.Member));
+        await ctx.RespondEmbedAsync(MusicEmbeds.EmptyQueueEmbed(ctx.Member));
     }
 
     public static async Task QueueAsync(CommonContext ctx)
@@ -215,10 +220,10 @@ public static class MusicCommands
                 await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"Трек {(playlist.IsRepeat ? "зациклен" : "расциклен")}", ctx.Member));
             }
             else
-                await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed("Но очередь пуста!", ctx.Member));
+                await ctx.RespondEmbedAsync(MusicEmbeds.EmptyQueueEmbed(ctx.Member));
         }
         else
-            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed("Но я никуда не подключена!", ctx.Member));
+            await ctx.RespondEmbedAsync(MusicEmbeds.NotConnectedEmbed(ctx.Member));
     }
 
     public static async Task ClearAsync(CommonContext ctx)
@@ -230,6 +235,25 @@ public static class MusicCommands
             await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed("Очередь очищена!", ctx.Member));
         }
         else
-            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed("Но я никуда не подключена!", ctx.Member));
+            await ctx.RespondEmbedAsync(MusicEmbeds.NotConnectedEmbed(ctx.Member));
     }
+
+    public static async Task PauseAsync(CommonContext ctx)
+    {
+        var playlist = Bot.GetPlaylist(ctx.Guild);
+        if (playlist != null)
+        {
+            if (playlist.CurrentTrack != null)
+            {
+                await playlist.ControlPauseAsync();
+                string answer = playlist.IsPaused ? "Продолжаем!:ok_hand:" : "Приостоновленно!:ok_hand:";
+                await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed(answer, ctx.Member));
+            }
+            else await ctx.RespondEmbedAsync(MusicEmbeds.EmptyQueueEmbed(ctx.Member));
+        }
+        else await ctx.RespondEmbedAsync(MusicEmbeds.NotConnectedEmbed(ctx.Member));
+    }
+
+    [GeneratedRegex("^((?:https?:)?\\/\\/)?((?:www|m)\\.)?((?:youtube\\.com|youtu.be))(\\/(?:[\\w\\-]+\\?v=|embed\\/|v\\/)?)([\\w\\-]+)(\\S+)?$")]
+    private static partial Regex YtRegex();
 }

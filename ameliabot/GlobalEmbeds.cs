@@ -1,6 +1,6 @@
 ﻿using DSharpPlus.Entities;
 
-namespace DnKR.AmeliaBot.BotCommands;
+namespace DnKR.AmeliaBot;
 
 public static class GlobalEmbeds
 {

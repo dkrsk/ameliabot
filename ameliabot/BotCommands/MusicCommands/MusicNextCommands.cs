@@ -18,7 +18,7 @@ public class MusicNextCommands : BaseCommandModule
     }
 
     [Command("play"), Aliases("p", "з", "здфн")]
-    public async Task PlayCommandAsync(CommandContext ctx, [RemainingText] string query)
+    public async Task PlayCommandAsync(CommandContext ctx, [RemainingText] string query = "pause")
     {
         await MusicCommands.PlayAsync(new CommonContext(ctx), query, false);
     }
@@ -63,5 +63,11 @@ public class MusicNextCommands : BaseCommandModule
     public async Task ClearCommandAsync(CommandContext ctx)
     {
         await MusicCommands.ClearAsync(new CommonContext(ctx));
+    }
+
+    [Command("pause"), Aliases("зфгыу")]
+    public async Task PauseCommandAsync(CommandContext ctx)
+    {
+        await MusicCommands.PauseAsync(new CommonContext(ctx));
     }
 }

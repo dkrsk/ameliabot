@@ -17,7 +17,7 @@ public class MusicSlashCommands : ApplicationCommandModule
     }
 
     [SlashCommand("play", "Добавить трек в очередь")]
-    public async Task PlayCommandAsync(InteractionContext ctx, [Option("название", "Название трека")] string query)
+    public async Task PlayCommandAsync(InteractionContext ctx, [Option("название", "Название трека")] string query = "pause")
     {
         await MusicCommands.PlayAsync(new CommonContext(ctx), query, false);
     }
@@ -62,5 +62,11 @@ public class MusicSlashCommands : ApplicationCommandModule
     public async Task ClearCommandAsync(InteractionContext ctx)
     {
         await MusicCommands.ClearAsync(new CommonContext(ctx));
+    }
+
+    [SlashCommand("pause", "Приостоновить/продолжить воспроизведение")]
+    public async Task PauseCommandAsync(InteractionContext ctx)
+    {
+        await MusicCommands.PauseAsync(new CommonContext(ctx));
     }
 }

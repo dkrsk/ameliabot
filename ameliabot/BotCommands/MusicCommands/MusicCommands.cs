@@ -245,8 +245,8 @@ public static partial class MusicCommands
         {
             if (playlist.CurrentTrack != null)
             {
-                await playlist.ControlPauseAsync();
                 string answer = playlist.IsPaused ? "Продолжаем!:ok_hand:" : "Приостоновленно!:ok_hand:";
+                await playlist.ControlPauseAsync();
                 await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed(answer, ctx.Member));
             }
             else await ctx.RespondEmbedAsync(MusicEmbeds.EmptyQueueEmbed(ctx.Member));

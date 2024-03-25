@@ -8,7 +8,7 @@ RUN dotnet restore
 RUN dotnet build -c Debug 
 #idk why Release was't work
 
-RUN curl -L -0 https://github.com/freyacodes/Lavalink/releases/download/3.7.9/Lavalink.jar -o ./Lavalink.jar && \
+RUN curl -L -0 https://github.com/freyacodes/Lavalink/releases/download/3.7.11/Lavalink.jar -o ./Lavalink.jar && \
 	curl https://pastebin.com/raw/2a1ZE9fp -o ./application.yml
 
 EXPOSE 2334

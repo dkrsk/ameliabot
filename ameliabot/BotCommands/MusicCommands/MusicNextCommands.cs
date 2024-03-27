@@ -70,4 +70,17 @@ public class MusicNextCommands : BaseCommandModule
     {
         await MusicCommands.PauseAsync(new CommonContext(ctx));
     }
+
+    [Command("playskip"), Aliases("ps", "зы", "здфнылшз")]
+    public async Task PlaySkipCommandAsync(CommandContext ctx, [RemainingText] string query)
+    {
+        await MusicCommands.PlaySkipAsync(new CommonContext(ctx), query);
+    }
+
+    //previous command
+    [Command("previous"), Aliases("prev", "зкум", "зкумшщгы")]
+    public async Task PreviousCommandAsync(CommandContext ctx)
+    {
+        await MusicCommands.PlayPreviousAsync(new CommonContext(ctx));
+    }
 }

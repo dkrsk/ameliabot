@@ -1,6 +1,13 @@
 FROM alpine
 RUN apk update && apk upgrade && \
-	apk add dotnet7-sdk openjdk17 curl build-base gcompat
+	apk add openjdk17 curl build-base gcompat bash icu
+	
+RUN mkdir -p /usr/share/dotnet \
+    && ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet 
+RUN wget https://dot.net/v1/dotnet-install.sh && \
+	chmod +x ./dotnet-install.sh && \
+	./dotnet-install.sh --install-dir /usr/share/dotnet
+
 COPY . ./app
 WORKDIR /app
 

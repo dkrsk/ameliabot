@@ -46,7 +46,7 @@ public class Bot
             AutoReconnect = true,
             Token = token,
             TokenType = TokenType.Bot,
-            Intents = DiscordIntents.All
+            Intents = DiscordIntents.Guilds | DiscordIntents.GuildMessages | DiscordIntents.GuildVoiceStates | DiscordIntents.MessageContents
         };
             
         discord = new(dconf);

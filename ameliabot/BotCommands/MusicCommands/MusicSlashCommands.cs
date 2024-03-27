@@ -69,4 +69,17 @@ public class MusicSlashCommands : ApplicationCommandModule
     {
         await MusicCommands.PauseAsync(new CommonContext(ctx));
     }
+
+    [SlashCommand("playskip", "Добавить трек в очередь и пропустить текущий")]
+    public async Task PlaySkipCommandAsync(InteractionContext ctx, [Option("название", "Название трека")] string query)
+    {
+        await MusicCommands.PlaySkipAsync(new CommonContext(ctx), query);
+    }
+
+    [SlashCommand("prev", "Вернуться к предыдущему треку")]
+    public async Task PrevCommandAsync(InteractionContext ctx)
+    {
+        await MusicCommands.PlayPreviousAsync(new CommonContext(ctx));
+    }
+
 }

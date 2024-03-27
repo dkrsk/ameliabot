@@ -1,5 +1,6 @@
 ﻿using DSharpPlus.Entities;
 using DSharpPlus.Lavalink;
+using System.Net.Http.Headers;
 
 namespace DnKR.AmeliaBot.Music;
 
@@ -13,7 +14,8 @@ public class GuildPlaylist
     public int Count => playlist.Count;
     public bool IsRepeat { get; private set; } = false;
     public bool IsPaused { get; private set; } = false;
-        
+
+    public LavalinkTrack? PreviousTrack { get; private set; }
 
     private readonly LavaEntities lava;
     private readonly LavalinkGuildConnection connection;
@@ -106,6 +108,7 @@ public class GuildPlaylist
         if (track != null && connection.IsConnected)
         {
             await connection.PlayAsync(track);
+            PreviousTrack = currentTrack;
             currentTrack = track;
 
             await SetMessageAsync();
@@ -120,6 +123,13 @@ public class GuildPlaylist
     public async Task PlayNextAsync()
     {
         await PlayNextAsync(0);
+    }
+
+    public async Task PlayPreviousAsync()
+    {
+        playlist.Insert(0, currentTrack);
+        playlist.Insert(0, PreviousTrack);
+        await PlayNextAsync(1);
     }
 
     private async Task SetMessageAsync()
@@ -182,5 +192,14 @@ public class GuildPlaylist
 
         await connection.PauseAsync();
         IsPaused = true;
+        await connection.SeekAsync(connection.CurrentState.PlaybackPosition - new TimeSpan(0, 0, 3));
+    }
+
+    public async Task SeekAsync(int position)
+    {
+        if (currentTrack != null)
+        {
+            await connection.SeekAsync(new TimeSpan(0, 0, position));
+        }
     }
 }

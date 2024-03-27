@@ -101,7 +101,7 @@ public static partial class MusicCommands
         {
             searchResult = await lava.node.Rest.GetTracksAsync(query, LavalinkSearchType.Plain);
         }
-        else searchResult = await lava.node.Rest.GetTracksAsync(query);
+        else searchResult = await lava.node.Rest.GetTracksAsync(query, LavalinkSearchType.Youtube);
 
         var joinMessage = await TryJoinAsync(ctx);
         if(joinMessage.Code != 0)
@@ -252,6 +252,38 @@ public static partial class MusicCommands
             else await ctx.RespondEmbedAsync(MusicEmbeds.EmptyQueueEmbed(ctx.Member));
         }
         else await ctx.RespondEmbedAsync(MusicEmbeds.NotConnectedEmbed(ctx.Member));
+    }
+
+    public static async Task PlaySkipAsync(CommonContext ctx, string query)
+    {
+        await PlayAsync(ctx, query, true);
+        var playlist = Bot.GetPlaylist(ctx.Guild);
+        await playlist.PlayNextAsync(1);
+    }
+
+    // method to seek track to 0
+    public static async Task PlayPreviousAsync(CommonContext ctx)
+    {
+        var playlist = Bot.GetPlaylist(ctx.Guild);
+        if (playlist != null)
+        {
+            if (playlist.CurrentTrack != null)
+            {
+                if(playlist.PreviousTrack == null || playlist.Connection.CurrentState.PlaybackPosition.TotalSeconds >= 5)
+                {
+                    await playlist.SeekAsync(0);
+                    await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed("Трек перемотан на начало", ctx.Member));
+                }
+                else
+                {
+                    await playlist.PlayPreviousAsync();
+                }
+            }
+            else
+                await ctx.RespondEmbedAsync(MusicEmbeds.EmptyQueueEmbed(ctx.Member));
+        }
+        else
+            await ctx.RespondEmbedAsync(MusicEmbeds.NotConnectedEmbed(ctx.Member));
     }
 
     [GeneratedRegex("^((?:https?:)?\\/\\/)?((?:www|m)\\.)?((?:youtube\\.com|youtu.be))(\\/(?:[\\w\\-]+\\?v=|embed\\/|v\\/)?)([\\w\\-]+)(\\S+)?$")]

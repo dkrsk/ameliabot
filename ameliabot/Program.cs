@@ -1,6 +1,6 @@
 ﻿using DnKR.AmeliaBot.BotCommands.MusicCommands;
 using DSharpPlus;
-using Lavalink4NET;
+
 using Lavalink4NET.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -35,12 +35,17 @@ internal class Program
             options.BaseAddress = new Uri("http://127.0.0.1:2334/");
             options.WebSocketUri = new Uri("ws://127.0.0.1:2334/v4/websocket");
             options.ReadyTimeout = TimeSpan.FromSeconds(10);
-            options.HttpClientName = "LavalinkHttpClient/1.0";
         });
 
         builder.Services.AddSingleton<MusicCommands>();
 
-        builder.Services.AddLogging(s => s.AddConsole().SetMinimumLevel(LogLevel.Trace));
+        builder.Services.AddLogging(s => s.AddConsole()
+            #if DEBUG
+            .SetMinimumLevel(LogLevel.Trace)
+            #else
+            .SetMinimumLevel(LogLevel.Information)
+            #endif
+        );
         builder.Build().Run();
     }
 }

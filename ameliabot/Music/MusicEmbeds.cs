@@ -1,7 +1,6 @@
 ﻿using DSharpPlus;
 using DSharpPlus.Entities;
 using Lavalink4NET.Tracks;
-using DnKR.AmeliaBot;
 
 namespace DnKR.AmeliaBot.Music;
 

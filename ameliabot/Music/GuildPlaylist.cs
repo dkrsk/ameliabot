@@ -1,15 +1,9 @@
-﻿using DSharpPlus;
-using DSharpPlus.Entities;
-using Lavalink4NET;
+﻿using DSharpPlus.Entities;
 using Lavalink4NET.Clients;
 using Lavalink4NET.Players;
 using Lavalink4NET.Players.Queued;
 using Lavalink4NET.Protocol.Payloads.Events;
-using Lavalink4NET.Rest.Entities.Tracks;
 using Lavalink4NET.Tracks;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace DnKR.AmeliaBot.Music;
 
@@ -46,6 +40,11 @@ public class GuildPlaylist : QueuedLavalinkPlayer
 
 
     // add enqueued event handle
+
+    protected override async ValueTask NotifyVoiceStateUpdatedAsync(VoiceState voiceState, CancellationToken cancellationToken = default)
+    {
+        
+    }
 
     protected override async ValueTask NotifyTrackStartedAsync(ITrackQueueItem track, CancellationToken cancellationToken = default)
     {

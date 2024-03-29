@@ -1,14 +1,15 @@
-﻿using DSharpPlus;
-using Lavalink4NET;
-using DSharpPlus.Entities;
-using System.Text.RegularExpressions;
+﻿using DnKR.AmeliaBot.Music;
 
-using DnKR.AmeliaBot.Music;
-using Lavalink4NET.Players;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Options;
-using System.Threading.Channels;
+
+using DSharpPlus.Entities;
+
+using Lavalink4NET;
+using Lavalink4NET.Players;
 using Lavalink4NET.Rest.Entities.Tracks;
-using Lavalink4NET.Tracks;
+using Lavalink4NET.Clients;
+using Lavalink4NET.Players.Queued;
 
 namespace DnKR.AmeliaBot.BotCommands.MusicCommands;
 
@@ -44,43 +45,37 @@ public partial class MusicCommands
         this.audioService = audioService;
     }
 
-    private async ValueTask<GuildPlaylist> GetPlaylistAsync(CommonContext ctx, bool connectToVoiceChannel = true)
+    private async ValueTask<GuildPlaylist?> GetPlaylistAsync(CommonContext ctx, bool connectToVoiceChannel = true)
     {
-        var options = new GuildPlaylistOptions() { Context = ctx };
+        var options = new GuildPlaylistOptions() { Context = ctx, SelfDeaf = true, HistoryCapacity = 10 };
         var retrieveOptions = new PlayerRetrieveOptions(
-            ChannelBehavior: connectToVoiceChannel ? PlayerChannelBehavior.Join : PlayerChannelBehavior.None);
+            ChannelBehavior: connectToVoiceChannel ? PlayerChannelBehavior.Move : PlayerChannelBehavior.None,
+            VoiceStateBehavior: MemberVoiceStateBehavior.Ignore);
+        
 
         PlayerResult<GuildPlaylist> result = await audioService.Players
-        .RetrieveAsync<GuildPlaylist, GuildPlaylistOptions>(ctx.Guild.Id, ctx.Member?.VoiceState.Channel.Id, GuildPlaylist.CreatePlayerAsync, Options.Create(options), retrieveOptions)
+        .RetrieveAsync<GuildPlaylist, GuildPlaylistOptions>(ctx.Guild.Id, ctx.Member.VoiceState.Channel?.Id, GuildPlaylist.CreatePlayerAsync, Options.Create(options), retrieveOptions)
         .ConfigureAwait(false);
-
+        
         var msg = string.Empty;
         if (!result.IsSuccess)
         {
             msg = result.Status switch
             {
                 PlayerRetrieveStatus.UserNotInVoiceChannel => "Ты не подключен к голосовому каналу!",
-                PlayerRetrieveStatus.BotNotConnected => "Ошибка lavalink",
                 _ => "Ой, что-то сломалось >.<"
             };
             await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed(msg, ctx.Member)).ConfigureAwait(false);
+            return null;
         }
-        
-        //if(connectToVoiceChannel)
-        //{
-        //    if (result.Status == PlayerRetrieveStatus.UserInSameVoiceChannel) // idk why this don't work
-        //        msg = "Я уже сюда подключена)";
-        //    else msg = $"Подключилась к {ctx.Member.VoiceState.Channel.Name}";
-        //}
 
-        //if (connectToVoiceChannel)
-        //    await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed(msg, ctx.Member));
         return result.Player;
     }
 
     public async Task JoinAsync(CommonContext ctx)
     {
-        await GetPlaylistAsync(ctx);
+        var player = await GetPlaylistAsync(ctx); if (player is null) return;
+        await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"Подключилась к {player.Channel.Name}", ctx.Member)).ConfigureAwait(false);
     }
 
     public async Task LeaveAsync(CommonContext ctx)
@@ -106,27 +101,39 @@ public partial class MusicCommands
         if (playlist is null) return;
 
         // TODO: add playlist search feature
-        Regex ytRegex = YtRegex();
-        var searchMode = ytRegex.IsMatch(query) ?
-            TrackSearchMode.None
-            : TrackSearchMode.YouTube;
+        //Regex ytRegex = YtRegex();
+        //var searchMode = ytRegex.IsMatch(query) ?
+        //    TrackSearchMode.None
+        //    : TrackSearchMode.YouTube;
         var searchResult = await audioService.Tracks
-            .LoadTrackAsync(query, searchMode)
-            .ConfigureAwait(false);
-
-        if(searchResult is null)
+            .LoadTracksAsync(query, TrackSearchMode.YouTube);
+        
+        if(searchResult.IsFailed)
         {
             await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"По запросу {query} ничего не нашлось.", ctx.Member));
             return;
         }
 
+        if (searchResult.IsPlaylist)
+        {
+            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"{searchResult.Playlist.Name} добавлен", ctx.Member));
+            
+            await playlist.PlayAsync(searchResult.Track);
+            foreach(var track in searchResult.Tracks[1..])
+            {
+                await playlist.Queue.AddAsync(new TrackQueueItem(track));
+            }
+            return;
+        }
+
+        await ctx.RespondEmbedAsync(MusicEmbeds.TrackAdded(searchResult.Track, ctx.Member));
+
         if(playTop)
         {
-            await playlist.Queue.InsertAsync(0, (ITrackQueueItem)searchResult); // Maybe it doesn't work
+            await playlist.PlayAsync(searchResult.Track, enqueue: false); // Maybe it doesn't work
         }
         else
-            await playlist.PlayAsync(searchResult).ConfigureAwait(false);
-        await ctx.RespondEmbedAsync(MusicEmbeds.TrackAdded(searchResult, ctx.Member)).ConfigureAwait(false);
+            await playlist.PlayAsync(searchResult.Track);
     }
 
     public async Task SearchAsync(CommonContext ctx, string query)
@@ -164,7 +171,7 @@ public partial class MusicCommands
         if(playlist.CurrentTrack != null)
         {
             await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"{playlist.CurrentTrack.Title} пропущен.", ctx.Member));
-            await playlist.SkipAsync().ConfigureAwait(false);
+            await playlist.SkipAsync((int)count).ConfigureAwait(false);
             return;
         }
         await ctx.RespondEmbedAsync(MusicEmbeds.EmptyQueueEmbed(ctx.Member));
@@ -242,7 +249,7 @@ public partial class MusicCommands
         if (playlist is null) return;
 
         await PlayAsync(ctx, query, true);
-        await playlist.SkipAsync().ConfigureAwait(false);
+        await SkipAsync(ctx, 1);
     }
 
     public async Task PlayPreviousAsync(CommonContext ctx)
@@ -252,7 +259,7 @@ public partial class MusicCommands
 
         if (playlist.CurrentTrack != null)
         {
-            if(playlist.Queue.HasHistory || playlist.Position.Value.Position.TotalSeconds >= 5)
+            if(!playlist.Queue.HasHistory || playlist.Position.Value.Position.TotalSeconds >= 5)
             {
                 await playlist.SeekAsync(new TimeSpan(0, 0, 0), SeekOrigin.Begin).ConfigureAwait(false);
                 await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed("Трек перемотан на начало", ctx.Member));
@@ -260,7 +267,7 @@ public partial class MusicCommands
             else
             {
                 await playlist.Queue.InsertAsync(0, playlist.Queue.History[0]);
-                await playlist.SkipAsync().ConfigureAwait(false);
+                await SkipAsync(ctx, 1);
             }
         }
         else

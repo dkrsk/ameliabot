@@ -1,8 +1,6 @@
 ﻿using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
-using Lavalink4NET;
-using Lavalink4NET.Rest.Entities.Tracks;
 using Lavalink4NET.Tracks;
 
 namespace DnKR.AmeliaBot.Music;
@@ -11,7 +9,7 @@ public static class MusicEvents
 {
     public static async Task VoiceStateUpdated(DiscordClient client, VoiceStateUpdateEventArgs args) //skipcq: CS-R1073
     {
-        if(args.Before.Channel.Users.Count == 1)
+        if(args.Before?.Channel.Users.Count == 1)
         {
             Thread checkAndLeave = new(async () =>
             {

@@ -1,21 +1,15 @@
-﻿using System;
-
-using DSharpPlus;
+﻿using DSharpPlus;
 using DSharpPlus.SlashCommands;
 using DSharpPlus.CommandsNext;
-using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
 
 using Lavalink4NET;
-using Lavalink4NET.Players;
-using Lavalink4NET.Players.Queued;
-using Lavalink4NET.Rest.Entities.Tracks;
 
-using DnKR.AmeliaBot.BotCommands;
 using DnKR.AmeliaBot.BotCommands.MusicCommands;
 using DnKR.AmeliaBot.BotCommands.ChatCommands;
 using DnKR.AmeliaBot.Music;
+
 using Microsoft.Extensions.Hosting;
-using DSharpPlus.EventArgs;
 using Microsoft.Extensions.DependencyInjection;
 
 
@@ -56,7 +50,7 @@ public sealed class Bot : BackgroundService
 
 
         discordClient.ComponentInteractionCreated += MusicEvents.ButtonSearchClicked;
-
+        discordClient.VoiceStateUpdated += MusicEvents.VoiceStateUpdated;
 
         await discordClient
             .ConnectAsync()

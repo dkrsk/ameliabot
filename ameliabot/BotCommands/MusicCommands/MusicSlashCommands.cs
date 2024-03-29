@@ -1,9 +1,19 @@
 ﻿using DSharpPlus.SlashCommands;
+using Lavalink4NET;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DnKR.AmeliaBot.BotCommands.MusicCommands;
 
 public class MusicSlashCommands : ApplicationCommandModule
 {
+    private readonly MusicCommands MusicCommands;
+
+    public MusicSlashCommands(IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+        this.MusicCommands = MusicCommands.GetInstance(serviceProvider.GetRequiredService<IAudioService>());
+    }
+
     [SlashCommand("join", "Подключиться к твоему голосовому каналу")]
     public async Task JoinCommandAsync(InteractionContext ctx)
     {

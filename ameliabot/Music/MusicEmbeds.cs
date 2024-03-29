@@ -1,6 +1,6 @@
 ﻿using DSharpPlus;
 using DSharpPlus.Entities;
-using DSharpPlus.Lavalink;
+using Lavalink4NET.Tracks;
 using DnKR.AmeliaBot;
 
 namespace DnKR.AmeliaBot.Music;
@@ -18,7 +18,7 @@ public static class MusicEmbeds
         };
         builder.WithThumbnail($"https://i3.ytimg.com/vi/{track.Identifier}/maxresdefault.jpg");
         builder.AddField("Автор: ", track.Author, false);
-        builder.AddField("Длительность: ", track.Length.ToString(), false);
+        builder.AddField("Длительность: ", track.Duration.ToString(), false);
 
         return builder.Build();
     }
@@ -34,12 +34,12 @@ public static class MusicEmbeds
         };
         builder.WithThumbnail($"https://i3.ytimg.com/vi/{track.Identifier}/maxresdefault.jpg");
         builder.AddField("Автор: ", track.Author, true);
-        builder.AddField("Длительность: ", track.Length.ToString(), false);
+        builder.AddField("Длительность: ", track.Duration.ToString(), false);
 
         return builder.Build();
     }
 
-    public static DiscordEmbed QueueEmbed(GuildPlaylist? playlist, DiscordMember reqby)
+    public static DiscordEmbed QueueEmbed(GuildPlaylist playlist, DiscordMember reqby)
     {
         var builder = new DiscordEmbedBuilder()
         {
@@ -49,17 +49,17 @@ public static class MusicEmbeds
         string desc = string.Empty;
 
 
-        if(playlist?.CurrentTrack != null)
+        if(playlist.CurrentTrack != null)
         {
             builder.AddField("Сейчас играет :musical_note:", $"[{playlist.CurrentTrack.Title}]({playlist.CurrentTrack.Uri})");
 
-            if (playlist.Count > 0)
+            if (playlist.Queue.Count > 0)
             {
                 builder.Title = $"Очередь для {playlist.Channel.Name}";
-                for (int i = 0; i < playlist.Count; i++)
+                for (int i = 0; i < playlist.Queue.Count; i++)
                 {
-                    var track = playlist.At(i);
-                    desc += $"{i + 1}. {track.Title} | {track.Length}\n";
+                    var track = playlist.Queue[i].Track;
+                    desc += $"{i + 1}. {track.Title} | {track.Duration}\n";
                 }
             }
             else

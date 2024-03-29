@@ -1,10 +1,21 @@
 ﻿using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using Lavalink4NET;
+
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DnKR.AmeliaBot.BotCommands.MusicCommands;
 
 public class MusicNextCommands : BaseCommandModule
 {
+    private readonly MusicCommands MusicCommands;
+
+    public MusicNextCommands(IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+        this.MusicCommands = MusicCommands.GetInstance(serviceProvider.GetRequiredService<IAudioService>());
+    }
+
     [Command("join"), Aliases("ощшт")]
     public async Task JoinCommandAsync(CommandContext ctx)
     {

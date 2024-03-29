@@ -3,139 +3,79 @@
 using DSharpPlus;
 using DSharpPlus.SlashCommands;
 using DSharpPlus.CommandsNext;
-using DSharpPlus.Net;
-using DSharpPlus.Lavalink;
 using DSharpPlus.Entities;
+
+using Lavalink4NET;
+using Lavalink4NET.Players;
+using Lavalink4NET.Players.Queued;
+using Lavalink4NET.Rest.Entities.Tracks;
 
 using DnKR.AmeliaBot.BotCommands;
 using DnKR.AmeliaBot.BotCommands.MusicCommands;
 using DnKR.AmeliaBot.BotCommands.ChatCommands;
 using DnKR.AmeliaBot.Music;
+using Microsoft.Extensions.Hosting;
+using DSharpPlus.EventArgs;
+using Microsoft.Extensions.DependencyInjection;
 
 
 namespace DnKR.AmeliaBot;
 
-public struct LavaEntities
+public sealed class Bot : BackgroundService
 {
-    public LavalinkExtension lava;
-    public LavalinkNodeConnection node;
-    public LavaEntities(LavalinkExtension lava, LavalinkNodeConnection node)
+    public static IAudioService AudioService { get; private set; }
+
+    private readonly IServiceProvider serviceProvider;
+    private readonly DiscordClient discordClient;
+
+    public Bot(IServiceProvider serviceProvider, DiscordClient discordClient)
     {
-        this.lava = lava;
-        this.node = node;
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+        ArgumentNullException.ThrowIfNull(discordClient);
+
+        this.serviceProvider = serviceProvider;
+        this.discordClient = discordClient;
+        AudioService = serviceProvider.GetRequiredService<IAudioService>();
     }
-}
 
-public class Bot
-{
-    public DiscordClient discord;
-    public static LavaEntities Lava { get; private set; } = new();
-    public static Dictionary<DiscordGuild, GuildPlaylist> Playlists { get; private set; } = new();
-    public static DiscordClient Client { get; private set; }
-
-    private readonly DiscordConfiguration dconf;
-    private readonly SlashCommandsExtension slashs;
-    private readonly CommandsNextExtension next;
-    private readonly LavalinkExtension lavalink;
-    private readonly LavalinkConfiguration lavaConfig;
-
-    public Bot(string token)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        dconf = new()
-        {
-            AutoReconnect = true,
-            Token = token,
-            TokenType = TokenType.Bot,
-            Intents = DiscordIntents.Guilds | DiscordIntents.GuildMessages | DiscordIntents.GuildVoiceStates | DiscordIntents.MessageContents
-        };
-            
-        discord = new(dconf);
-        Client = discord;
+        var slash = discordClient
+            .UseSlashCommands(new SlashCommandsConfiguration { Services = serviceProvider });
+        slash.RegisterCommands<MusicSlashCommands>();
+        slash.RegisterCommands<ChatSlashCommands>();
 
-        SlashCommandsConfiguration commandsConfiguration = new();
-
-        slashs = discord.UseSlashCommands();
-        // #if DEBUG
-        //     slashs.RegisterCommands<MainCommands>(820240588556337164UL); // skipcq: CS-R1076
-        //     slashs.RegisterCommands<MusicSlashCommands>(820240588556337164UL); // skipcq: CS-R1076
-        //     slashs.RegisterCommands<ChatSlashCommands>(820240588556337164UL); // skipcq: CS-R1076
-        // #else
-            slashs.RegisterCommands<MainCommands>();
-            slashs.RegisterCommands<MusicSlashCommands>();
-            slashs.RegisterCommands<ChatSlashCommands>();
-        // #endif
-
-        CommandsNextConfiguration nextConfiguration = new()
-        {
-            StringPrefixes = new[] { "d!", "в!" }
-        };
-
-        next = discord.UseCommandsNext(nextConfiguration);
-        next.RegisterCommands<MusicNextCommands>();
+        var next = discordClient
+            .UseCommandsNext(new CommandsNextConfiguration
+            {
+                StringPrefixes = ["d!", "в!"],
+                Services = serviceProvider
+            });
         next.RegisterCommands<ChatNextCommands>();
+        next.RegisterCommands<MusicNextCommands>();
 
-        discord.ComponentInteractionCreated += MusicEvents.ButtonSearchClicked;
 
-        var endpoint = new ConnectionEndpoint("127.0.0.1", 2334);
-        lavaConfig = new LavalinkConfiguration()
+        discordClient.ComponentInteractionCreated += MusicEvents.ButtonSearchClicked;
+
+
+        await discordClient
+            .ConnectAsync()
+            .ConfigureAwait(false);
+
+        var readyTaskCompletionSource = new TaskCompletionSource();
+
+        Task SetResult(DiscordClient client, ReadyEventArgs eventArgs)
         {
-            Password = "youshallnotpass",
-            SocketEndpoint = endpoint,
-            RestEndpoint = endpoint
-        };
-        lavalink = discord.UseLavalink();
-
-        discord.MessageCreated += ChatEvents.MessageCreated;
-        discord.VoiceStateUpdated += MusicEvents.VoiceStateUpdated;
-    }
-
-    ~Bot()
-    {
-        Lava.node.StopAsync().GetAwaiter().GetResult();
-    }
-
-    public async Task RunAsync()
-    {
-        await this.discord.ConnectAsync();
-
-        // do
-        // {
-        //     try
-        //     {
-                await this.lavalink.ConnectAsync(this.lavaConfig);
-        //     }
-        //     catch { Thread.Sleep(2); }
-        // }
-        // while (this.lavalink.ConnectedNodes.Count == 0);
-        
-        Lava = new(lavalink, lavalink.ConnectedNodes.Values.First());
-    }
-
-    public static GuildPlaylist? GetPlaylist(DiscordGuild guild)
-    {
-        if (Playlists.TryGetValue(guild, out GuildPlaylist? playlist))
-        {
-            return playlist;
+            readyTaskCompletionSource.TrySetResult();
+            return Task.CompletedTask;
         }
-        return null;
-    }
 
-    public static void CreatePlaylist(CommonContext ctx)
-    {
-        try
-        {
-            Playlists.Add(ctx.Guild, new GuildPlaylist(ctx));
-        }
-        catch (ArgumentException) { }
-    }
+        discordClient.Ready += SetResult;
+        await readyTaskCompletionSource.Task.ConfigureAwait(false);
+        discordClient.Ready -= SetResult;
 
-    public static async Task RemovePlaylistAsync(DiscordGuild guild)
-    {
-        if (Playlists.TryGetValue(guild, out GuildPlaylist? playlist))
-        {
-            Playlists.Remove(guild);
-        }
-        else return;        
+        await Task
+            .Delay(Timeout.InfiniteTimeSpan, stoppingToken)
+            .ConfigureAwait(false);
     }
-        
 }

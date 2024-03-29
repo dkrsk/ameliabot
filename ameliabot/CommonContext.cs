@@ -34,7 +34,7 @@ public class CommonContext
     public CommonContext(CommandContext context)
     {
         this.Guild = context.Guild;
-        this.Member = context.Member ?? (DiscordMember)Bot.Client.CurrentUser;
+        this.Member = context.Member ?? (DiscordMember)context.Client.CurrentUser;
         this.Channel = context.Channel;
         this.RespondEmbedAsync = (DiscordEmbed embed, bool e, DiscordComponent[]? components) =>
         {

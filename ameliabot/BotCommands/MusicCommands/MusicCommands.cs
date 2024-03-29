@@ -1,9 +1,14 @@
 ﻿using DSharpPlus;
-using DSharpPlus.Lavalink;
+using Lavalink4NET;
 using DSharpPlus.Entities;
 using System.Text.RegularExpressions;
 
 using DnKR.AmeliaBot.Music;
+using Lavalink4NET.Players;
+using Microsoft.Extensions.Options;
+using System.Threading.Channels;
+using Lavalink4NET.Rest.Entities.Tracks;
+using Lavalink4NET.Tracks;
 
 namespace DnKR.AmeliaBot.BotCommands.MusicCommands;
 
@@ -20,136 +25,122 @@ public struct JoinMessage
     }
 }
 
-public static partial class MusicCommands
+public partial class MusicCommands
 {
-    private static async Task<JoinMessage> TryJoinAsync(CommonContext ctx)
+    private readonly IAudioService audioService;
+    private static MusicCommands instance;
+
+    public static MusicCommands GetInstance(IAudioService audioService)
     {
-        var lava = Bot.Lava;
-        DiscordChannel? channel = ctx.Member.VoiceState != null ? ctx.Member.VoiceState.Channel : null;
-
-        if (!lava.lava.ConnectedNodes.Any())
-        {
-            return new(1,"Ошибка lavalink");
-        }
-
-        if (channel == null || channel.Type != ChannelType.Voice)
-        {
-            return new(2,"Ты не подключен к голосовому каналу!");
-        }
-
-        var guildConnection = lava.node.GetGuildConnection(ctx.Guild);
-        if (guildConnection != null)
-        {
-            if(guildConnection.Channel != channel)
-            {
-                await guildConnection.DisconnectAsync(false);
-            }
-            else
-            {
-                return new(0, "Я уже сюда подключена)");
-            }
-        }
-
-        var conn = await lava.node.ConnectAsync(channel);
-
-        Bot.CreatePlaylist(ctx);
-
-        conn.PlaybackFinished += MusicEvents.PlaybackFinished;
-
-        return new(0,$"Подключилась к {channel.Name}");
+        if (instance == null)
+            instance = new MusicCommands(audioService);
+        return instance;
     }
 
-    public static async Task JoinAsync(CommonContext ctx)
+    private MusicCommands(IAudioService audioService)
     {
-        await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed((await TryJoinAsync(ctx)).Content, ctx.Member));
+        ArgumentNullException.ThrowIfNull(audioService);
+
+        this.audioService = audioService;
     }
 
-    public static async Task LeaveAsync(CommonContext ctx)
+    private async ValueTask<GuildPlaylist> GetPlaylistAsync(CommonContext ctx, bool connectToVoiceChannel = true)
     {
-        var lava = Bot.Lava;
-        var conn = lava.node.GetGuildConnection(ctx.Guild);
+        var options = new GuildPlaylistOptions() { Context = ctx };
+        var retrieveOptions = new PlayerRetrieveOptions(
+            ChannelBehavior: connectToVoiceChannel ? PlayerChannelBehavior.Join : PlayerChannelBehavior.None);
 
+        PlayerResult<GuildPlaylist> result = await audioService.Players
+        .RetrieveAsync<GuildPlaylist, GuildPlaylistOptions>(ctx.Guild.Id, ctx.Member?.VoiceState.Channel.Id, GuildPlaylist.CreatePlayerAsync, Options.Create(options), retrieveOptions)
+        .ConfigureAwait(false);
 
-        if (conn == null)
+        var msg = string.Empty;
+        if (!result.IsSuccess)
         {
-            await ctx.RespondEmbedAsync(MusicEmbeds.NotConnectedEmbed(ctx.Member));
-            return;
+            msg = result.Status switch
+            {
+                PlayerRetrieveStatus.UserNotInVoiceChannel => "Ты не подключен к голосовому каналу!",
+                PlayerRetrieveStatus.BotNotConnected => "Ошибка lavalink",
+                _ => "Ой, что-то сломалось >.<"
+            };
+            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed(msg, ctx.Member)).ConfigureAwait(false);
         }
+        
+        //if(connectToVoiceChannel)
+        //{
+        //    if (result.Status == PlayerRetrieveStatus.UserInSameVoiceChannel) // idk why this don't work
+        //        msg = "Я уже сюда подключена)";
+        //    else msg = $"Подключилась к {ctx.Member.VoiceState.Channel.Name}";
+        //}
 
-        await Bot.RemovePlaylistAsync(ctx.Guild);
+        //if (connectToVoiceChannel)
+        //    await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed(msg, ctx.Member));
+        return result.Player;
+    }
 
-        await conn.StopAsync();
-        await conn.DisconnectAsync();
+    public async Task JoinAsync(CommonContext ctx)
+    {
+        await GetPlaylistAsync(ctx);
+    }
+
+    public async Task LeaveAsync(CommonContext ctx)
+    {
+        var playlist = await GetPlaylistAsync(ctx, false);
+        if (playlist is null) return;
+
+        await playlist.DisconnectAsync();
+        await playlist.DisposeAsync();
 
         await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed("Пока!", ctx.Member));
     }
 
-    public static async Task PlayAsync(CommonContext ctx, string query, bool playTop)
+    public async Task PlayAsync(CommonContext ctx, string query, bool playTop)
     {
-        var lava = Bot.Lava;
-
         if (query == "pause")
         {
             await PauseAsync(ctx);
             return;
         }
 
+        var playlist = await GetPlaylistAsync(ctx);
+        if (playlist is null) return;
+
+        // TODO: add playlist search feature
         Regex ytRegex = YtRegex();
-        LavalinkLoadResult searchResult;
+        var searchMode = ytRegex.IsMatch(query) ?
+            TrackSearchMode.None
+            : TrackSearchMode.YouTube;
+        var searchResult = await audioService.Tracks
+            .LoadTrackAsync(query, searchMode)
+            .ConfigureAwait(false);
 
-        if (ytRegex.IsMatch(query))
-        {
-            searchResult = await lava.node.Rest.GetTracksAsync(query, LavalinkSearchType.Plain);
-        }
-        else searchResult = await lava.node.Rest.GetTracksAsync(query, LavalinkSearchType.Youtube);
-
-        var joinMessage = await TryJoinAsync(ctx);
-        if(joinMessage.Code != 0)
-        {
-            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed(joinMessage.Content, ctx.Member));
-            return;
-        }
-
-        if(searchResult.LoadResultType == LavalinkLoadResultType.LoadFailed || searchResult.LoadResultType == LavalinkLoadResultType.NoMatches)
+        if(searchResult is null)
         {
             await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"По запросу {query} ничего не нашлось.", ctx.Member));
             return;
         }
 
-        var track = searchResult.Tracks.First();
-        await ctx.RespondEmbedAsync(MusicEmbeds.TrackAdded(track, ctx.Member));
-
-        var playlist = Bot.GetPlaylist(ctx.Guild);
-        if (playlist != null)
+        if(playTop)
         {
-            if (playTop)
-                await playlist.AddTopAsync(track);
-            else
-                await playlist.AddAsync(track);
-
-            if (query.Contains("playlist?list"))
-                playlist.AddMany(searchResult.Tracks.ToArray()[1..]);
+            await playlist.Queue.InsertAsync(0, (ITrackQueueItem)searchResult); // Maybe it doesn't work
         }
-        else throw new NullReferenceException($"{nameof(TryJoinAsync)} wasn't create playlist instance for some reason");
+        else
+            await playlist.PlayAsync(searchResult).ConfigureAwait(false);
+        await ctx.RespondEmbedAsync(MusicEmbeds.TrackAdded(searchResult, ctx.Member)).ConfigureAwait(false);
     }
 
-    public static async Task SearchAsync(CommonContext ctx, string query)
+    public async Task SearchAsync(CommonContext ctx, string query)
     {
-        var lava = Bot.Lava;
-
         if (ctx.DeferAsync != null)
             await ctx.DeferAsync(false);
 
-        var searchResult = await lava.node.Rest.GetTracksAsync(query);
+        var playlist = await GetPlaylistAsync(ctx); if (playlist is null) return;
 
-        var joinMessage = await TryJoinAsync(ctx);
-        if (joinMessage.Code != 0)
-        {
-            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed(joinMessage.Content, ctx.Member));
-            return;
-        }
+        var searchResult = await audioService.Tracks
+            .LoadTracksAsync(query, TrackSearchMode.YouTube)
+            .ConfigureAwait(false); ;
 
-        if (searchResult.LoadResultType == LavalinkLoadResultType.LoadFailed || searchResult.LoadResultType == LavalinkLoadResultType.NoMatches)
+        if (!searchResult.IsSuccess)
         {
             await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"По запросу {query} ничего не нашлось.", ctx.Member));
             return;
@@ -157,11 +148,7 @@ public static partial class MusicCommands
 
         var tracks = searchResult.Tracks.ToArray();
 
-        await TryJoinAsync(ctx);
-        var playlist = Bot.GetPlaylist(ctx.Guild);
-        if (playlist != null)
-            playlist.SearchResults = tracks[..5];
-        else throw new ArgumentNullException($"{nameof(TryJoinAsync)} wasn't create playlist instance for some reason");
+        playlist.SearchResults = tracks[..5];
 
         var searchEmbed = MusicEmbeds.SearchEmbed(tracks, ctx.Member);
 
@@ -171,22 +158,22 @@ public static partial class MusicCommands
             await ctx.RespondEmbedAsync(searchEmbed.Item1, false, searchEmbed.Item2);
     }
 
-    public static async Task SkipAsync(CommonContext ctx, long count)
+    public async Task SkipAsync(CommonContext ctx, long count)
     {
-        var playlist = Bot.GetPlaylist(ctx.Guild);
-        if(playlist?.CurrentTrack != null)
+        var playlist = await GetPlaylistAsync(ctx, false);
+        if(playlist.CurrentTrack != null)
         {
             await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"{playlist.CurrentTrack.Title} пропущен.", ctx.Member));
-            await playlist.PlayNextAsync((int)count);
+            await playlist.SkipAsync().ConfigureAwait(false);
             return;
         }
         await ctx.RespondEmbedAsync(MusicEmbeds.EmptyQueueEmbed(ctx.Member));
     }
 
-    public static async Task QueueAsync(CommonContext ctx)
+    public async Task QueueAsync(CommonContext ctx)
     {
-        if(ctx.DeferAsync != null) await ctx.DeferAsync();
-        var playlist = Bot.GetPlaylist(ctx.Guild);
+        if(ctx.DeferAsync != null) await ctx.DeferAsync().ConfigureAwait(false);
+        var playlist = await GetPlaylistAsync(ctx, false);
         var emb = MusicEmbeds.QueueEmbed(playlist, ctx.Member);
     
         if (ctx.EditResponseAsync != null)
@@ -195,13 +182,15 @@ public static partial class MusicCommands
             await ctx.RespondEmbedAsync(emb);
     }
 
-    public static async Task RemoveAsync(CommonContext ctx, long position)
+    public async Task RemoveAsync(CommonContext ctx, long position)
     {
-        var playlist = Bot.GetPlaylist(ctx.Guild);
-        if(playlist?.Count > position - 1)
+        var playlist = await GetPlaylistAsync(ctx, false);
+        if (playlist is null) return;
+
+        if(playlist.Queue.Count > position - 1)
         {
-            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"`{position}.` {playlist[(int)position-1].Title} удален.", ctx.Member));
-            playlist.Remove((int)position - 1);
+            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"`{position}.` {playlist.Queue[(int)position-1].Track.Title} удален.", ctx.Member));
+            await playlist.Queue.RemoveAtAsync((int)position - 1).ConfigureAwait(false);
         }
         else
         {
@@ -209,81 +198,73 @@ public static partial class MusicCommands
         }
     }
 
-    public static async Task LoopAsync(CommonContext ctx)
+    public async Task LoopAsync(CommonContext ctx)
     {
-        var playlist = Bot.GetPlaylist(ctx.Guild);
-        if (playlist != null)
+        var playlist = await GetPlaylistAsync(ctx, false);
+        if (playlist is null) return;
+
+        if (playlist.CurrentTrack != null)
         {
-            if (playlist.CurrentTrack != null)
-            {
-                playlist.ChangeRepeat();
-                await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"Трек {(playlist.IsRepeat ? "зациклен" : "расциклен")}", ctx.Member));
-            }
-            else
-                await ctx.RespondEmbedAsync(MusicEmbeds.EmptyQueueEmbed(ctx.Member));
+            playlist.RepeatMode = Lavalink4NET.Players.Queued.TrackRepeatMode.Track;
+            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"Трек {(playlist.RepeatMode == Lavalink4NET.Players.Queued.TrackRepeatMode.Track ? "зациклен" : "расциклен")}", ctx.Member));
         }
         else
-            await ctx.RespondEmbedAsync(MusicEmbeds.NotConnectedEmbed(ctx.Member));
+            await ctx.RespondEmbedAsync(MusicEmbeds.EmptyQueueEmbed(ctx.Member));
     }
 
-    public static async Task ClearAsync(CommonContext ctx)
+    public async Task ClearAsync(CommonContext ctx)
     {
-        var playlist = Bot.GetPlaylist(ctx.Guild);
-        if(playlist != null)
+        var playlist = await GetPlaylistAsync(ctx, false);
+        if (playlist is null) return;
+
+        await playlist.StopAsync().ConfigureAwait(false);
+        await playlist.Queue.ClearAsync().ConfigureAwait(false);
+        await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed("Очередь очищена!", ctx.Member));
+    }
+
+    public async Task PauseAsync(CommonContext ctx)
+    {
+        var playlist = await GetPlaylistAsync(ctx, false);
+        if (playlist is null) return;
+
+        if (playlist.CurrentTrack != null)
         {
-            await playlist.ClearAsync();
-            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed("Очередь очищена!", ctx.Member));
+            string answer = playlist.IsPaused ? "Продолжаем!:ok_hand:" : "Приостоновленно!:ok_hand:";
+            await playlist.ControlPauseAsync();
+            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed(answer, ctx.Member));
         }
-        else
-            await ctx.RespondEmbedAsync(MusicEmbeds.NotConnectedEmbed(ctx.Member));
+        else await ctx.RespondEmbedAsync(MusicEmbeds.EmptyQueueEmbed(ctx.Member));
     }
 
-    public static async Task PauseAsync(CommonContext ctx)
+    public async Task PlaySkipAsync(CommonContext ctx, string query)
     {
-        var playlist = Bot.GetPlaylist(ctx.Guild);
-        if (playlist != null)
-        {
-            if (playlist.CurrentTrack != null)
-            {
-                string answer = playlist.IsPaused ? "Продолжаем!:ok_hand:" : "Приостоновленно!:ok_hand:";
-                await playlist.ControlPauseAsync();
-                await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed(answer, ctx.Member));
-            }
-            else await ctx.RespondEmbedAsync(MusicEmbeds.EmptyQueueEmbed(ctx.Member));
-        }
-        else await ctx.RespondEmbedAsync(MusicEmbeds.NotConnectedEmbed(ctx.Member));
-    }
+        var playlist = await GetPlaylistAsync(ctx);
+        if (playlist is null) return;
 
-    public static async Task PlaySkipAsync(CommonContext ctx, string query)
-    {
         await PlayAsync(ctx, query, true);
-        var playlist = Bot.GetPlaylist(ctx.Guild);
-        await playlist.PlayNextAsync(1);
+        await playlist.SkipAsync().ConfigureAwait(false);
     }
 
-    // method to seek track to 0
-    public static async Task PlayPreviousAsync(CommonContext ctx)
+    public async Task PlayPreviousAsync(CommonContext ctx)
     {
-        var playlist = Bot.GetPlaylist(ctx.Guild);
-        if (playlist != null)
+        var playlist = await GetPlaylistAsync(ctx, false);
+        if (playlist is null) return;
+
+        if (playlist.CurrentTrack != null)
         {
-            if (playlist.CurrentTrack != null)
+            if(playlist.Queue.HasHistory || playlist.Position.Value.Position.TotalSeconds >= 5)
             {
-                if(playlist.PreviousTrack == null || playlist.Connection.CurrentState.PlaybackPosition.TotalSeconds >= 5)
-                {
-                    await playlist.SeekAsync(0);
-                    await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed("Трек перемотан на начало", ctx.Member));
-                }
-                else
-                {
-                    await playlist.PlayPreviousAsync();
-                }
+                await playlist.SeekAsync(new TimeSpan(0, 0, 0), SeekOrigin.Begin).ConfigureAwait(false);
+                await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed("Трек перемотан на начало", ctx.Member));
             }
             else
-                await ctx.RespondEmbedAsync(MusicEmbeds.EmptyQueueEmbed(ctx.Member));
+            {
+                await playlist.Queue.InsertAsync(0, playlist.Queue.History[0]);
+                await playlist.SkipAsync().ConfigureAwait(false);
+            }
         }
         else
-            await ctx.RespondEmbedAsync(MusicEmbeds.NotConnectedEmbed(ctx.Member));
+            await ctx.RespondEmbedAsync(MusicEmbeds.EmptyQueueEmbed(ctx.Member));
     }
 
     [GeneratedRegex("^((?:https?:)?\\/\\/)?((?:www|m)\\.)?((?:youtube\\.com|youtu.be))(\\/(?:[\\w\\-]+\\?v=|embed\\/|v\\/)?)([\\w\\-]+)(\\S+)?$")]

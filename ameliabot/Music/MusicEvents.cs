@@ -1,51 +1,33 @@
 ﻿using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
-using DSharpPlus.Lavalink;
-using DSharpPlus.Lavalink.EventArgs;
+using Lavalink4NET;
+using Lavalink4NET.Rest.Entities.Tracks;
+using Lavalink4NET.Tracks;
 
 namespace DnKR.AmeliaBot.Music;
 
 public static class MusicEvents
 {
-    public static async Task PlaybackFinished(LavalinkGuildConnection lava, TrackFinishEventArgs args) //skipcq: CS-R1073
-    {
-        if (lava.Channel == null) return;
-        var playlist = Bot.GetPlaylist(lava.Guild);
-        if (playlist != null)
-        {
-            await playlist.PlayNextAsync();
-            return;
-        }
-    }
-
     public static async Task VoiceStateUpdated(DiscordClient client, VoiceStateUpdateEventArgs args) //skipcq: CS-R1073
     {
-        if (args.Before == null) return;
-        var playlist = Bot.GetPlaylist(args.Guild);
-        if (playlist != null)
+        if(args.Before.Channel.Users.Count == 1)
         {
-            if (args.User.IsCurrent && Bot.Lava.node.GetGuildConnection(args.Guild) != null && args.After.Channel == null)
+            Thread checkAndLeave = new(async () =>
             {
-                await Bot.RemovePlaylistAsync(args.Guild);
-                return;
-            }
-            if(args.Before.Channel.Users.Count == 1)
-            {
-                Thread checkAndLeave = new(async () =>
+                Thread.Sleep(15000);
+                var users = args.Before.Channel.Users;
+                if(users.Count == 1 && users[0].IsCurrent)
                 {
-                    Thread.Sleep(15000);
-                    var users = args.Before.Channel.Users;
-                    if(users.Count == 1 && users[0].IsCurrent)
-                    {
-                        await Bot.RemovePlaylistAsync(args.Guild);
-                        await Bot.Lava.node.GetGuildConnection(args.Guild).DisconnectAsync();
-                        return;
-                    }
-                });
+                    var player = await Bot.AudioService.Players.GetPlayerAsync(args.Guild.Id);
+                    if (player != null)
+                        await player.DisconnectAsync().ConfigureAwait(false);
+                        await player.DisposeAsync().ConfigureAwait(false);
+                    return;
+                }
+            });
 
-                checkAndLeave.Start();
-            }
+            checkAndLeave.Start();
         }
     }
 
@@ -58,13 +40,13 @@ public static class MusicEvents
 
         if (int.TryParse(args.Id[^1].ToString(), out int index))
         {
-            var playlist = Bot.GetPlaylist(args.Guild);
+            var playlist = await Bot.AudioService.Players.GetPlayerAsync<GuildPlaylist>(args.Guild.Id);
             if (playlist != null)
             {
                 LavalinkTrack? track = playlist.SearchResults[index-1];
                 if (track != null)
                 {
-                    await playlist.AddAsync(track);
+                    await playlist.PlayAsync(track).ConfigureAwait(false);
                     playlist.SearchResults = new LavalinkTrack?[5];
 
                     await args.Message.DeleteAsync();

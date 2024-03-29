@@ -1,205 +1,87 @@
-﻿using DSharpPlus.Entities;
-using DSharpPlus.Lavalink;
-using System.Net.Http.Headers;
+﻿using DSharpPlus;
+using DSharpPlus.Entities;
+using Lavalink4NET;
+using Lavalink4NET.Clients;
+using Lavalink4NET.Players;
+using Lavalink4NET.Players.Queued;
+using Lavalink4NET.Protocol.Payloads.Events;
+using Lavalink4NET.Rest.Entities.Tracks;
+using Lavalink4NET.Tracks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace DnKR.AmeliaBot.Music;
 
-public class GuildPlaylist
+public sealed record class GuildPlaylistOptions : QueuedLavalinkPlayerOptions
 {
-    public LavalinkTrack? CurrentTrack => currentTrack;
-    public LavalinkGuildConnection Connection => connection;
+    public CommonContext Context { get; init; }
+}
+
+public class GuildPlaylist : QueuedLavalinkPlayer
+{
     public DiscordChannel Channel => channel;
 
-    public LavalinkTrack?[] SearchResults { get => searchList; set => searchList = value; } 
-    public int Count => playlist.Count;
-    public bool IsRepeat { get; private set; } = false;
-    public bool IsPaused { get; private set; } = false;
+    public LavalinkTrack?[] SearchResults { get => searchList; set => searchList = value; }
 
-    public LavalinkTrack? PreviousTrack { get; private set; }
+    public ITrackQueueItem? PreviousTrack { get; private set; }
 
-    private readonly LavaEntities lava;
-    private readonly LavalinkGuildConnection connection;
     private readonly DiscordChannel channel;
-    private readonly DiscordGuild guild;
-    private readonly List<LavalinkTrack> playlist;
-    private LavalinkTrack? currentTrack;
     private DiscordMessage? message;
     private LavalinkTrack?[] searchList = new LavalinkTrack?[5];
 
-    public GuildPlaylist(CommonContext ctx)
+    public GuildPlaylist(IPlayerProperties<GuildPlaylist, GuildPlaylistOptions> properties)
+        : base(properties)
     {
-        lava = Bot.Lava;
-        this.guild = ctx.Guild;
-        this.connection = lava.node.GetGuildConnection(guild);
-        this.channel = ctx.Channel;
-        playlist = new List<LavalinkTrack>();
+        this.channel = properties.Options.Value.Context.Channel;
     }
 
-    public bool Any()
+    public static ValueTask<GuildPlaylist> CreatePlayerAsync(IPlayerProperties<GuildPlaylist, GuildPlaylistOptions> properties, CancellationToken cancellationToken = default)
     {
-        return Count != 0;
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(properties);
+
+        return ValueTask.FromResult(new GuildPlaylist(properties));
     }
 
-    public async Task AddAsync(LavalinkTrack track)
+
+    // add enqueued event handle
+
+    protected override async ValueTask NotifyTrackStartedAsync(ITrackQueueItem track, CancellationToken cancellationToken = default)
     {
-        playlist.Add(track);
-        if(currentTrack != null || Any())
+        await base
+            .NotifyTrackStartedAsync(track, cancellationToken)
+            .ConfigureAwait(false);
+        
+        if (message != null)
         {
-            await PlayNextAsync();
+            await message.DeleteAsync();
         }
+        message = await channel.SendMessageAsync(MusicEmbeds.NowPlaying(CurrentTrack, (LavalinkTrack?)Queue.Peek()));
     }
 
-    public async Task AddTopAsync(LavalinkTrack track)
+    protected override async ValueTask NotifyTrackEndedAsync(ITrackQueueItem track, TrackEndReason endReason, CancellationToken cancellationToken)
     {
-        playlist.Insert(0, track);
-        if(currentTrack != null || Any())
-        {
-            await PlayNextAsync();
-        }
-    }
+        await base
+            .NotifyTrackEndedAsync(track, endReason, cancellationToken)
+            .ConfigureAwait(false);
 
-    public void AddMany(LavalinkTrack[] tracks)
-    {
-        playlist.AddRange(tracks);
-    }
-
-    public LavalinkTrack? PopNext()
-    {
-        if (playlist.Any())
-        {
-            var track = playlist[0];
-            playlist.RemoveAt(0);
-            return track;
-        }
-        return null;
-    }
-
-    public LavalinkTrack? GetNext()
-    {
-        if(playlist.Any())
-        {
-            return playlist.First();
-        }
-        return null;
-    }
-
-    public async Task PlayNextAsync(int skip)
-    {
-        if (connection.CurrentState.CurrentTrack != null && skip <= 0)
-        {
-            return;
-        }
-
-        if (skip <= 0 && currentTrack != null && IsRepeat)
-        {
-            await connection.PlayAsync(currentTrack);
-            return;
-        }
-
-        LavalinkTrack? track;
-        IsRepeat = false;
-
-        do
-        {
-            track = PopNext();
-            skip--;
-        } while (skip > 0);
-
-        if (track != null && connection.IsConnected)
-        {
-            await connection.PlayAsync(track);
-            PreviousTrack = currentTrack;
-            currentTrack = track;
-
-            await SetMessageAsync();
-
-            return;
-        }
-        currentTrack = null;
-        await SetMessageAsync();
-        await connection.StopAsync();
-    }
-
-    public async Task PlayNextAsync()
-    {
-        await PlayNextAsync(0);
-    }
-
-    public async Task PlayPreviousAsync()
-    {
-        playlist.Insert(0, currentTrack);
-        playlist.Insert(0, PreviousTrack);
-        await PlayNextAsync(1);
-    }
-
-    private async Task SetMessageAsync()
-    {
-        if(currentTrack != null)
-        {
-            if (message != null)
-            {
-                await message.DeleteAsync();
-            }
-            message = await channel.SendMessageAsync(MusicEmbeds.NowPlaying(currentTrack, GetNext()));
-            return;
-        }
-        if(message != null)
+        if (!Queue.Any())
         {
             await message.DeleteAsync();
             message = null;
         }
     }
 
-    public void Remove(int index)
-    {
-        try
-        {
-            playlist.RemoveAt(index);
-        }
-        catch (ArgumentOutOfRangeException)
-        {
-            return;
-        }
-    }
-
-    public async Task ClearAsync()
-    {
-        playlist.Clear();
-        await connection.StopAsync();
-    }
-
-    public LavalinkTrack At(int index)
-    {
-        if(index > Count-1)
-            throw new ArgumentOutOfRangeException(nameof(index));
-        return playlist[index];
-    }
-    public LavalinkTrack this[int index] => playlist[index];
-
-    public void ChangeRepeat()
-    {
-        IsRepeat = !IsRepeat;
-    }
-
     public async Task ControlPauseAsync()
     {
         if (IsPaused)
         {
-            await connection.ResumeAsync();
-            IsPaused = false;
+            await ResumeAsync();
             return;
         }
 
-        await connection.PauseAsync();
-        IsPaused = true;
-        await connection.SeekAsync(connection.CurrentState.PlaybackPosition - new TimeSpan(0, 0, 3));
-    }
-
-    public async Task SeekAsync(int position)
-    {
-        if (currentTrack != null)
-        {
-            await connection.SeekAsync(new TimeSpan(0, 0, position));
-        }
+        await PauseAsync();
+        await SeekAsync(new TimeSpan(0, 0, -3), SeekOrigin.Current).ConfigureAwait(false);
     }
 }

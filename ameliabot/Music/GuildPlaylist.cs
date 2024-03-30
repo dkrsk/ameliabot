@@ -52,11 +52,11 @@ public class GuildPlaylist : QueuedLavalinkPlayer
             .NotifyTrackStartedAsync(track, cancellationToken)
             .ConfigureAwait(false);
         
-        if (message != null)
+        if (message is not null)
         {
             await message.DeleteAsync();
         }
-        message = await channel.SendMessageAsync(MusicEmbeds.NowPlaying(CurrentTrack, (LavalinkTrack?)Queue.Peek()));
+        message = await channel.SendMessageAsync(MusicEmbeds.NowPlaying((LavalinkTrack)track));
     }
 
     protected override async ValueTask NotifyTrackEndedAsync(ITrackQueueItem track, TrackEndReason endReason, CancellationToken cancellationToken)

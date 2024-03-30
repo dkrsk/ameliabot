@@ -6,19 +6,28 @@ namespace DnKR.AmeliaBot.Music;
 
 public static class MusicEmbeds
 {
-    public static DiscordEmbed NowPlaying(LavalinkTrack track, LavalinkTrack? next)
+    private const string githubUrl = "https://github.com/dkrsk/ameliabot0";
+    private static string GetDuration(LavalinkTrack? track)
+    {
+        if(track is null) return "Unknown";
+        return track.IsLiveStream ? "Live" : track.Duration.ToString();
+    }
+
+    public static DiscordEmbed NowPlaying(LavalinkTrack track)
     {
         var builder = new DiscordEmbedBuilder()
         {
             Color = new DiscordColor("#fb3d1c"),
             Title = "Сейчас играет :musical_note:",
-            Url = track.Uri.ToString(),
+            Url = track.Uri?.ToString() ?? githubUrl,
             Description = $"[{track.Title}]({track.Uri})"
         };
-        builder.WithThumbnail($"https://i3.ytimg.com/vi/{track.Identifier}/maxresdefault.jpg");
+        builder.WithThumbnail(track.ArtworkUri);
         builder.AddField("Автор: ", track.Author, false);
-        builder.AddField("Длительность: ", track.Duration.ToString(), false);
-
+        builder.AddField("Длительность: ",
+            GetDuration(track),
+            false);
+        
         return builder.Build();
     }
 
@@ -28,13 +37,15 @@ public static class MusicEmbeds
         {
             Color = reqby.Color,
             Title = "Трек добавлен!",
-            Url = track.Uri.ToString(),
+            Url = track.Uri?.ToString() ?? githubUrl,
             Description = $"[{track.Title}]({track.Uri})"
         };
-        builder.WithThumbnail($"https://i3.ytimg.com/vi/{track.Identifier}/maxresdefault.jpg");
+        builder.WithThumbnail(track.ArtworkUri);
         builder.AddField("Автор: ", track.Author, true);
-        builder.AddField("Длительность: ", track.Duration.ToString(), false);
-
+        builder.AddField("Длительность: ",
+            GetDuration(track),
+            false);
+        
         return builder.Build();
     }
 
@@ -43,7 +54,7 @@ public static class MusicEmbeds
         var builder = new DiscordEmbedBuilder()
         {
             Color = reqby.Color,
-            Url = "https://github.com/dkrsk"
+            Url = githubUrl
         };
         string desc = string.Empty;
 
@@ -58,7 +69,7 @@ public static class MusicEmbeds
                 for (int i = 0; i < playlist.Queue.Count; i++)
                 {
                     var track = playlist.Queue[i].Track;
-                    desc += $"{i + 1}. {track.Title} | {track.Duration}\n";
+                    desc += $"{i + 1}. {track?.Uri?.ToString() ?? "Unknown"} | {GetDuration(track)}";
                 }
             }
             else
@@ -101,6 +112,5 @@ public static class MusicEmbeds
         return Tuple.Create(embedBuilder.Build(), buttons);
     }
 
-    public static DiscordEmbed NotConnectedEmbed(DiscordMember reqby) => GlobalEmbeds.UniEmbed("Но я никуда не подключена!", reqby);
     public static DiscordEmbed EmptyQueueEmbed(DiscordMember reqby) => GlobalEmbeds.UniEmbed("Ничего не воспроизводится!", reqby);
 }

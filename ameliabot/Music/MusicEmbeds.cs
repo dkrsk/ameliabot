@@ -69,7 +69,7 @@ public static class MusicEmbeds
                 for (int i = 0; i < playlist.Queue.Count; i++)
                 {
                     var track = playlist.Queue[i].Track;
-                    desc += $"{i + 1}. {track?.Uri?.ToString() ?? "Unknown"} | {GetDuration(track)}";
+                    desc += $"{i + 1}. {track?.Title?.ToString() ?? "Unknown track"} | {GetDuration(track)}";
                 }
             }
             else

@@ -75,7 +75,7 @@ public partial class MusicCommands
     public async Task JoinAsync(CommonContext ctx)
     {
         var player = await GetPlaylistAsync(ctx); if (player is null) return;
-        await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"Подключилась к {player.Channel.Name}", ctx.Member)).ConfigureAwait(false);
+        await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"Подключилась к `{player.Channel.Name}`", ctx.Member)).ConfigureAwait(false);
     }
 
     public async Task LeaveAsync(CommonContext ctx)

@@ -2,6 +2,7 @@
 using Lavalink4NET.Players;
 using Lavalink4NET.Players.Queued;
 using Lavalink4NET.Protocol.Payloads.Events;
+using Lavalink4NET.Rest.Entities.Tracks;
 using Lavalink4NET.Tracks;
 
 namespace DnKR.AmeliaBot.Music;
@@ -51,7 +52,7 @@ public class GuildPlaylist : QueuedLavalinkPlayer
         message = await channel.SendMessageAsync(MusicEmbeds.NowPlaying((LavalinkTrack)track));
     }
 
-    protected override async ValueTask NotifyTrackEndedAsync(ITrackQueueItem track, TrackEndReason endReason, CancellationToken cancellationToken)
+    protected override async ValueTask NotifyTrackEndedAsync(ITrackQueueItem track, TrackEndReason endReason, CancellationToken cancellationToken = default)
     {
         await base
             .NotifyTrackEndedAsync(track, endReason, cancellationToken)
@@ -62,6 +63,18 @@ public class GuildPlaylist : QueuedLavalinkPlayer
             if(message is not null) await message.DeleteAsync();
             message = null;
         }
+    }
+
+    protected override async ValueTask NotifyTrackExceptionAsync(ITrackQueueItem track, TrackException exception, CancellationToken cancellationToken = default)
+    {
+        await base
+            .NotifyTrackExceptionAsync(track, exception, cancellationToken)
+            .ConfigureAwait(false);
+
+        await channel.SendMessageAsync(GlobalEmbeds.DetailedEmbed(new GlobalEmbeds.DetailedEmbedContent() {
+            Description = $"Произошла ошибка при проигрывании `{track.Track?.Title}`! >.<",
+            Footer = exception.Message
+        }));
     }
 
     public async Task ControlPauseAsync()

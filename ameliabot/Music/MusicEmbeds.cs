@@ -17,14 +17,14 @@ public static class MusicEmbeds
     {
         var builder = new DiscordEmbedBuilder()
         {
-            Color = new DiscordColor("#fb3d1c"),
+            Color = GlobalEmbeds.AmeliaColor,
             Title = "Сейчас играет :musical_note:",
             Url = track.Uri?.ToString() ?? githubUrl,
             Description = $"[{track.Title}]({track.Uri})"
-        };
-        builder.WithThumbnail(track.ArtworkUri);
-        builder.AddField("Автор: ", track.Author, false);
-        builder.AddField("Длительность: ",
+        }
+        .WithThumbnail(track.ArtworkUri)
+        .AddField("Автор: ", track.Author, false)
+        .AddField("Длительность: ",
             GetDuration(track),
             false);
         
@@ -39,10 +39,10 @@ public static class MusicEmbeds
             Title = "Трек добавлен!",
             Url = track.Uri?.ToString() ?? githubUrl,
             Description = $"[{track.Title}]({track.Uri})"
-        };
-        builder.WithThumbnail(track.ArtworkUri);
-        builder.AddField("Автор: ", track.Author, true);
-        builder.AddField("Длительность: ",
+        }
+        .WithThumbnail(track.ArtworkUri)
+        .AddField("Автор: ", track.Author, true)
+        .AddField("Длительность: ",
             GetDuration(track),
             false);
         

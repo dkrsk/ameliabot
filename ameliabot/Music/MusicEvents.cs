@@ -41,7 +41,7 @@ public static class MusicEvents
             var playlist = await Bot.AudioService.Players.GetPlayerAsync<GuildPlaylist>(args.Guild.Id);
             if (playlist != null)
             {
-                LavalinkTrack? track = playlist.SearchResults[index-1];
+                LavalinkTrack? track = playlist.GetSearchResults()[index-1];
                 if (track != null)
                 {
                     await playlist.PlayAsync(track).ConfigureAwait(false);

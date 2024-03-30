@@ -16,7 +16,7 @@ public class GuildPlaylist : QueuedLavalinkPlayer
 {
     public DiscordChannel Channel => channel;
 
-    public LavalinkTrack?[] SearchResults { get => (LavalinkTrack?[]) searchList.Clone(); set => searchList = value; }
+    public LavalinkTrack?[] SearchResults { set => searchList = value; }
 
     private readonly DiscordChannel channel;
     private DiscordMessage? message;
@@ -35,6 +35,8 @@ public class GuildPlaylist : QueuedLavalinkPlayer
 
         return ValueTask.FromResult(new GuildPlaylist(properties));
     }
+
+    public LavalinkTrack?[] GetSearchResults() => (LavalinkTrack?[]) searchList.Clone();
 
 
     // add enqueued event handle

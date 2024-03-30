@@ -51,6 +51,7 @@ public sealed class Bot : BackgroundService
 
         discordClient.ComponentInteractionCreated += MusicEvents.ButtonSearchClicked;
         discordClient.VoiceStateUpdated += MusicEvents.VoiceStateUpdated;
+        discordClient.MessageCreated += ChatEvents.MessageCreated;
 
         await discordClient
             .ConnectAsync()

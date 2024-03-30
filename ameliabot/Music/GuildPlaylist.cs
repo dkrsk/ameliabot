@@ -1,5 +1,4 @@
 ﻿using DSharpPlus.Entities;
-using Lavalink4NET.Clients;
 using Lavalink4NET.Players;
 using Lavalink4NET.Players.Queued;
 using Lavalink4NET.Protocol.Payloads.Events;
@@ -16,15 +15,13 @@ public class GuildPlaylist : QueuedLavalinkPlayer
 {
     public DiscordChannel Channel => channel;
 
-    public LavalinkTrack?[] SearchResults { get => searchList; set => searchList = value; }
-
-    public ITrackQueueItem? PreviousTrack { get; private set; }
+    public LavalinkTrack?[] SearchResults { get => (LavalinkTrack?[]) searchList.Clone(); set => searchList = value; }
 
     private readonly DiscordChannel channel;
     private DiscordMessage? message;
     private LavalinkTrack?[] searchList = new LavalinkTrack?[5];
 
-    public GuildPlaylist(IPlayerProperties<GuildPlaylist, GuildPlaylistOptions> properties)
+    private GuildPlaylist(IPlayerProperties<GuildPlaylist, GuildPlaylistOptions> properties)
         : base(properties)
     {
         this.channel = properties.Options.Value.Context.Channel;
@@ -40,11 +37,6 @@ public class GuildPlaylist : QueuedLavalinkPlayer
 
 
     // add enqueued event handle
-
-    protected override async ValueTask NotifyVoiceStateUpdatedAsync(VoiceState voiceState, CancellationToken cancellationToken = default)
-    {
-        
-    }
 
     protected override async ValueTask NotifyTrackStartedAsync(ITrackQueueItem track, CancellationToken cancellationToken = default)
     {
@@ -67,7 +59,7 @@ public class GuildPlaylist : QueuedLavalinkPlayer
 
         if (!Queue.Any())
         {
-            await message.DeleteAsync();
+            if(message is not null) await message.DeleteAsync();
             message = null;
         }
     }

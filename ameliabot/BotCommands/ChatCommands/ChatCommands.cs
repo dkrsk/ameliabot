@@ -10,15 +10,8 @@ public static class ChatCommands
         if (ctx.DeferAsync != null)
             await ctx.DeferAsync(false);
 
-        string? pasta;
-        try
-        {
-            pasta = (await PastaParser.GetFilteredPastaAsync("ASCII", "стрим", "стример", "саб", "твич")).Text;
-        }
-        catch (Exception e)
-        {
-            pasta = "Админ copypastas.ru лучший!!!!)))))";
-        }
+        string pasta = (await PastaParser.GetFilteredPastaAsync("ASCII", "стрим", "стример", "саб", "твич")).Text;// "Админ copypastas.ru лучший!!!!)))))
+        
         if (ctx.EditResponseAsync != null)
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent(pasta));
         else

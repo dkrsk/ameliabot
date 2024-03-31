@@ -1,6 +1,6 @@
 FROM alpine
 RUN apk update && apk upgrade && \
-	apk add openjdk17 curl build-base gcompat bash icu
+	apk add openjdk17 curl build-base gcompat bash icu git
 	
 RUN mkdir -p /usr/share/dotnet \
 	&& ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet 
@@ -13,7 +13,11 @@ WORKDIR /app
 
 RUN dotnet restore
 RUN dotnet build -c Release
-#idk why Release was't work
+
+RUN touch ./version && \
+	git rev-parse HEAD >> ./version << '\n' && \
+	git log -1 | grep "Date:" | cut -d ' ' -f4- >> ./version << '\n' && \
+	git branch | grep \* | cut -d ' ' -f2- >> ./version
 
 RUN curl -L -0 https://github.com/ZeyoYT/Lavalink/releases/download/Fixed/Lavalink.jar -o ./Lavalink.jar && \
 	curl https://pastebin.com/raw/2a1ZE9fp -o ./application.yml

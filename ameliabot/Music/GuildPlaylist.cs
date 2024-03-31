@@ -51,7 +51,7 @@ public class GuildPlaylist : QueuedLavalinkPlayer
         {
             await message.DeleteAsync();
         }
-        message = await channel.SendMessageAsync(MusicEmbeds.NowPlaying((LavalinkTrack)track));
+        message = await channel.SendMessageAsync(MusicEmbeds.NowPlaying(track.Track));
     }
 
     protected override async ValueTask NotifyTrackEndedAsync(ITrackQueueItem track, TrackEndReason endReason, CancellationToken cancellationToken = default)

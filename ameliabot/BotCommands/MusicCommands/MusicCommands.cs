@@ -97,6 +97,8 @@ public partial class MusicCommands
             return;
         }
 
+        await ctx.DeferAsync(false);
+
         var playlist = await GetPlaylistAsync(ctx);
         if (playlist is null) return;
 
@@ -110,13 +112,13 @@ public partial class MusicCommands
         
         if(searchResult.IsFailed)
         {
-            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"По запросу {query} ничего не нашлось.", ctx.Member));
+            await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(GlobalEmbeds.UniEmbed($"По запросу {query} ничего не нашлось.", ctx.Member)));
             return;
         }
 
         if (searchResult.IsPlaylist)
         {
-            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"{searchResult.Playlist.Name} добавлен", ctx.Member));
+            await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(GlobalEmbeds.UniEmbed($"{searchResult.Playlist.Name} добавлен", ctx.Member)));
             
             await playlist.PlayAsync(searchResult.Track);
             foreach(var track in searchResult.Tracks[1..])
@@ -126,7 +128,7 @@ public partial class MusicCommands
             return;
         }
 
-        await ctx.RespondEmbedAsync(MusicEmbeds.TrackAdded(searchResult.Track, ctx.Member));
+        await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(MusicEmbeds.TrackAdded(searchResult.Track, ctx.Member)));
 
         if(playTop)
         {

@@ -15,8 +15,8 @@ RUN dotnet restore
 RUN dotnet build -c Release
 
 RUN touch ./version && \
-	git rev-parse HEAD >> ./version << '\n' && \
-	git log -1 | grep "Date:" | cut -d ' ' -f4- >> ./version << '\n' && \
+	git rev-parse HEAD >> ./version && \
+	git log -1 | grep "Date:" | cut -d ' ' -f4- >> ./version && \
 	git branch | grep \* | cut -d ' ' -f2- >> ./version
 
 RUN curl -L -0 https://github.com/ZeyoYT/Lavalink/releases/download/Fixed/Lavalink.jar -o ./Lavalink.jar && \

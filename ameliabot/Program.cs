@@ -26,7 +26,7 @@ internal class Program
         {
             using (var fs = new StreamReader("version")) // skipcq: CS-R1050
             {
-                Console.WriteLine("\tСommit: " + fs.ReadLine()?[..6]); // commit
+                Console.WriteLine("\tCommit: " + fs.ReadLine()?[..6]); // commit
                 Console.WriteLine("\tCommit time: " + fs.ReadLine()); // commit time
                 Console.WriteLine("\tBranch: " + fs.ReadLine()); // commit branch
                 Console.WriteLine("\tCopyright: Damian Korsakov");

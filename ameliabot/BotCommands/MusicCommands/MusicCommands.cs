@@ -52,7 +52,7 @@ public partial class MusicCommands
             ChannelBehavior: connectToVoiceChannel ? PlayerChannelBehavior.Move : PlayerChannelBehavior.None,
             VoiceStateBehavior: MemberVoiceStateBehavior.Ignore);
         
-        PlayerResult<GuildPlaylist> result;
+        PlayerResult<GuildPlaylist> result; // skipcq: CS-W1022
         try
         {
             result = await audioService.Players

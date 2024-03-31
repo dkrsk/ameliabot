@@ -1,4 +1,4 @@
-﻿using DSharpPlus.CommandsNext;
+using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 
@@ -40,14 +40,12 @@ public class CommonContext
                 IsResposed = true;
                 return context.FollowUpAsync(new DiscordFollowupMessageBuilder().AddEmbed(embed).AsEphemeral(e));
             }
-            else
-            {
-                var msg = new DiscordWebhookBuilder().AddEmbed(embed);
-                if (c != null)
-                    msg.AddComponents(c);
-                IsDefered = false;
-                return context.EditResponseAsync(msg);
-            }
+
+            var msg = new DiscordWebhookBuilder().AddEmbed(embed);
+            if (c != null)
+                msg.AddComponents(c);
+            IsDefered = false;
+            return context.EditResponseAsync(msg);
         };
         this.EditResponseAsync = context.EditResponseAsync;
         this.RespondTextAsync = context.CreateResponseAsync;
@@ -71,6 +69,6 @@ public class CommonContext
             return context.RespondAsync(msg);
         };
         this.RespondTextAsync = (string content, bool ephemeral) => context.RespondAsync(content);
-        this.DeferAsync = async (bool e) => { return; };
+        this.DeferAsync = async (bool e) => { return; }; //skipcq: CS-R1085
     }
 }

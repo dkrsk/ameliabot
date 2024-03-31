@@ -1,4 +1,4 @@
-using DSharpPlus.CommandsNext;
+﻿using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 
@@ -32,7 +32,7 @@ public class CommonContext
         {
             if (!IsDefered)
             {
-                if (!IsResposed) // idk why. maybe its weird
+                if (!IsResposed)
                 {
                     IsResposed = true;
                     return context.CreateResponseAsync(embed, e);
@@ -45,6 +45,7 @@ public class CommonContext
             if (c != null)
                 msg.AddComponents(c);
             IsDefered = false;
+            IsResposed = true;
             return context.EditResponseAsync(msg);
         };
         this.EditResponseAsync = context.EditResponseAsync;

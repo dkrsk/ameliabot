@@ -140,7 +140,7 @@ public partial class MusicCommands
 
         if(playTop)
         {
-            await playlist.PlayAsync(searchResult.Track, enqueue: false);
+            await playlist.Queue.InsertAsync(0, new TrackQueueItem(searchResult.Track));
         }
         else
             await playlist.PlayAsync(searchResult.Track);
@@ -252,7 +252,8 @@ public partial class MusicCommands
         var playlist = await GetPlaylistAsync(ctx);
         if (playlist is null) return;
 
-        await PlayAsync(ctx, query, true);
+        await PlayAsync(ctx, query, true); 
+        await SkipAsync(ctx, 1);
     }
 
     public async Task PlayPreviousAsync(CommonContext ctx)

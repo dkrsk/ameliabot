@@ -1,6 +1,4 @@
 ﻿using DSharpPlus.Entities;
-using Lavalink4NET.Protocol.Models;
-using Lavalink4NET.Protocol.Responses;
 
 namespace DnKR.AmeliaBot;
 
@@ -8,12 +6,23 @@ public static class GlobalEmbeds
 {
     public static DiscordColor AmeliaColor { get; } = new DiscordColor("#fb3d1c");
 
-    public static DiscordEmbed UniEmbed(string query, DiscordMember reqby)
+    public static DiscordEmbed UniEmbed(string query, DiscordMember? reqby)
     {
         var builder = new DiscordEmbedBuilder()
         {
-            Color = reqby.Color,
+            Color = reqby?.Color ?? AmeliaColor,
             Title = query
+        };
+        return builder.Build();
+    }
+
+    private const string shortErrorMessage = "Ой, что-то сломалось >.<";
+    public static DiscordEmbed ShortErrorEmbed(DiscordMember? reqby = null)
+    {
+        var builder = new DiscordEmbedBuilder()
+        {
+            Color = reqby?.Color ?? AmeliaColor,
+            Title = shortErrorMessage
         };
         return builder.Build();
     }

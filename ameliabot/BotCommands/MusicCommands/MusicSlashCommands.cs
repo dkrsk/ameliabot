@@ -1,4 +1,4 @@
-﻿using DSharpPlus.SlashCommands;
+using DSharpPlus.SlashCommands;
 using Lavalink4NET;
 using Microsoft.Extensions.DependencyInjection;
 

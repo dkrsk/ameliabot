@@ -1,4 +1,4 @@
-﻿using DnKR.AmeliaBot.Music;
+using DnKR.AmeliaBot.Music;
 
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Options;
@@ -52,20 +52,28 @@ public partial class MusicCommands
             ChannelBehavior: connectToVoiceChannel ? PlayerChannelBehavior.Move : PlayerChannelBehavior.None,
             VoiceStateBehavior: MemberVoiceStateBehavior.Ignore);
         
+        PlayerResult<GuildPlaylist> result;
+        try
+        {
+            result = await audioService.Players
+            .RetrieveAsync<GuildPlaylist, GuildPlaylistOptions>(ctx.Guild.Id, ctx.Member.VoiceState?.Channel?.Id, GuildPlaylist.CreatePlayerAsync, Options.Create(options), retrieveOptions)
+            .ConfigureAwait(false);
+        }
+        catch (TimeoutException)
+        {
+            await ctx.RespondEmbedAsync(GlobalEmbeds.ShortErrorEmbed(ctx.Member)).ConfigureAwait(false);
+            return null;
+        }
 
-        PlayerResult<GuildPlaylist> result = await audioService.Players
-        .RetrieveAsync<GuildPlaylist, GuildPlaylistOptions>(ctx.Guild.Id, ctx.Member.VoiceState.Channel?.Id, GuildPlaylist.CreatePlayerAsync, Options.Create(options), retrieveOptions)
-        .ConfigureAwait(false);
-        
-        var msg = string.Empty;
+        DiscordEmbed embed;
         if (!result.IsSuccess)
         {
-            msg = result.Status switch
+            embed = result.Status switch
             {
-                PlayerRetrieveStatus.UserNotInVoiceChannel => "Ты не подключен к голосовому каналу!",
-                _ => "Ой, что-то сломалось >.<"
+                PlayerRetrieveStatus.UserNotInVoiceChannel => GlobalEmbeds.UniEmbed("Ты не подключен к голосовому каналу!", ctx.Member),
+                _ => GlobalEmbeds.ShortErrorEmbed(ctx.Member)
             };
-            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed(msg, ctx.Member)).ConfigureAwait(false);
+            await ctx.RespondEmbedAsync(embed).ConfigureAwait(false); // !!!!!!!!
             return null;
         }
 
@@ -112,13 +120,13 @@ public partial class MusicCommands
         
         if(searchResult.IsFailed)
         {
-            await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(GlobalEmbeds.UniEmbed($"По запросу {query} ничего не нашлось.", ctx.Member)));
+            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"По запросу {query} ничего не нашлось.", ctx.Member));
             return;
         }
 
         if (searchResult.IsPlaylist)
         {
-            await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(GlobalEmbeds.UniEmbed($"{searchResult.Playlist.Name} добавлен", ctx.Member)));
+            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"{searchResult.Playlist.Name} добавлен", ctx.Member));
             
             await playlist.PlayAsync(searchResult.Track);
             foreach(var track in searchResult.Tracks[1..])
@@ -128,20 +136,20 @@ public partial class MusicCommands
             return;
         }
 
-        await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(MusicEmbeds.TrackAdded(searchResult.Track, ctx.Member)));
+        await ctx.RespondEmbedAsync(MusicEmbeds.TrackAdded(searchResult.Track, ctx.Member));
 
         if(playTop)
         {
-            await playlist.PlayAsync(searchResult.Track, enqueue: false); // Maybe it doesn't work
+            await playlist.PlayAsync(searchResult.Track, enqueue: false);
         }
         else
             await playlist.PlayAsync(searchResult.Track);
+
     }
 
     public async Task SearchAsync(CommonContext ctx, string query)
     {
-        if (ctx.DeferAsync != null)
-            await ctx.DeferAsync(false);
+        await ctx.DeferAsync(false);
 
         var playlist = await GetPlaylistAsync(ctx); if (playlist is null) return;
 
@@ -160,20 +168,19 @@ public partial class MusicCommands
         playlist.SearchResults = tracks[..5];
 
         var searchEmbed = MusicEmbeds.SearchEmbed(tracks, ctx.Member);
-
-        if (ctx.EditResponseAsync != null)
-            await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(searchEmbed.Item1).AddComponents(searchEmbed.Item2));
-        else
-            await ctx.RespondEmbedAsync(searchEmbed.Item1, false, searchEmbed.Item2);
+        
+        await ctx.RespondEmbedAsync(searchEmbed.Item1, false, searchEmbed.Item2);
     }
 
     public async Task SkipAsync(CommonContext ctx, long count)
     {
         var playlist = await GetPlaylistAsync(ctx, false);
+        if(playlist is null) return;
+
         if(playlist.CurrentTrack != null)
         {
             await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"{playlist.CurrentTrack.Title} пропущен.", ctx.Member));
-            await playlist.SkipAsync((int)count).ConfigureAwait(false);
+            await playlist.SkipAsync((int)count);
             return;
         }
         await ctx.RespondEmbedAsync(MusicEmbeds.EmptyQueueEmbed(ctx.Member));
@@ -181,14 +188,9 @@ public partial class MusicCommands
 
     public async Task QueueAsync(CommonContext ctx)
     {
-        if(ctx.DeferAsync != null) await ctx.DeferAsync().ConfigureAwait(false);
+        await ctx.DeferAsync().ConfigureAwait(false);
         var playlist = await GetPlaylistAsync(ctx, false);
-        var emb = MusicEmbeds.QueueEmbed(playlist, ctx.Member);
-    
-        if (ctx.EditResponseAsync != null)
-            await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(emb));
-        else
-            await ctx.RespondEmbedAsync(emb);
+        await ctx.RespondEmbedAsync(MusicEmbeds.QueueEmbed(playlist, ctx.Member));
     }
 
     public async Task RemoveAsync(CommonContext ctx, long position)
@@ -214,8 +216,8 @@ public partial class MusicCommands
 
         if (playlist.CurrentTrack != null)
         {
-            playlist.RepeatMode = Lavalink4NET.Players.Queued.TrackRepeatMode.Track;
-            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"Трек {(playlist.RepeatMode == Lavalink4NET.Players.Queued.TrackRepeatMode.Track ? "зациклен" : "расциклен")}", ctx.Member));
+            playlist.RepeatMode = playlist.RepeatMode == TrackRepeatMode.Track ? TrackRepeatMode.None : TrackRepeatMode.Track;
+            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"Трек {(playlist.RepeatMode == TrackRepeatMode.Track ? "зациклен" : "расциклен")}", ctx.Member));
         }
         else
             await ctx.RespondEmbedAsync(MusicEmbeds.EmptyQueueEmbed(ctx.Member));
@@ -251,7 +253,6 @@ public partial class MusicCommands
         if (playlist is null) return;
 
         await PlayAsync(ctx, query, true);
-        await SkipAsync(ctx, 1);
     }
 
     public async Task PlayPreviousAsync(CommonContext ctx)

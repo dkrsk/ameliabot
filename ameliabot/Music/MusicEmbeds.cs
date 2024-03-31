@@ -49,7 +49,7 @@ public static class MusicEmbeds
         return builder.Build();
     }
 
-    public static DiscordEmbed QueueEmbed(GuildPlaylist playlist, DiscordMember reqby)
+    public static DiscordEmbed QueueEmbed(GuildPlaylist? playlist, DiscordMember reqby)
     {
         var builder = new DiscordEmbedBuilder()
         {
@@ -59,7 +59,7 @@ public static class MusicEmbeds
         string desc = string.Empty;
 
 
-        if(playlist.CurrentTrack != null)
+        if(playlist?.CurrentTrack != null)
         {
             builder.AddField("Сейчас играет :musical_note:", $"[{playlist.CurrentTrack.Title}]({playlist.CurrentTrack.Uri})");
 

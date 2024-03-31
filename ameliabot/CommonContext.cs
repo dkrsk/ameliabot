@@ -18,17 +18,44 @@ public class CommonContext
     public RespondEmbedOperation RespondEmbedAsync;
     public RespondTextOperation RespondTextAsync;
     public EditResponseAsyncOperation? EditResponseAsync;
-    public DeferOperation? DeferAsync;
+    public DeferOperation DeferAsync;
+
+    public bool IsDefered { get; private set; } = false;
+    public bool IsResposed { get; private set; } = false;
 
     public CommonContext(InteractionContext context)
     {
         this.Guild = context.Guild;
         this.Member = context.Member;
         this.Channel = context.Channel;
-        this.RespondEmbedAsync = (DiscordEmbed embed, bool e, DiscordComponent[]? c) => context.CreateResponseAsync(embed, e);
+        this.RespondEmbedAsync = (DiscordEmbed embed, bool e, DiscordComponent[]? c) =>
+        {
+            if (!IsDefered)
+            {
+                if (!IsResposed) // idk why. maybe its weird
+                {
+                    IsResposed = true;
+                    return context.CreateResponseAsync(embed, e);
+                }
+                IsResposed = true;
+                return context.FollowUpAsync(new DiscordFollowupMessageBuilder().AddEmbed(embed).AsEphemeral(e));
+            }
+            else
+            {
+                var msg = new DiscordWebhookBuilder().AddEmbed(embed);
+                if (c != null)
+                    msg.AddComponents(c);
+                IsDefered = false;
+                return context.EditResponseAsync(msg);
+            }
+        };
+        this.EditResponseAsync = context.EditResponseAsync;
         this.RespondTextAsync = context.CreateResponseAsync;
-        this.EditResponseAsync= context.EditResponseAsync;
-        this.DeferAsync = context.DeferAsync;
+        this.DeferAsync = (bool e) =>
+        { 
+            IsDefered = true;
+            return context.DeferAsync(e);
+        };
     }
 
     public CommonContext(CommandContext context)
@@ -44,5 +71,6 @@ public class CommonContext
             return context.RespondAsync(msg);
         };
         this.RespondTextAsync = (string content, bool ephemeral) => context.RespondAsync(content);
+        this.DeferAsync = async (bool e) => { return; };
     }
 }

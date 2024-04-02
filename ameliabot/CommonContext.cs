@@ -81,9 +81,11 @@ public class SlashContext(InteractionContext interactionContext) : CommonContext
             {
                 IsResponsed = true;
                 await interactionContext.CreateResponseAsync(new DiscordInteractionResponseBuilder(messageBuilder));
+                return;
             }
             IsResponsed = true;
             await interactionContext.FollowUpAsync(new DiscordFollowupMessageBuilder(messageBuilder));
+            return;
         }
         IsDefered = false;
         IsResponsed = true;

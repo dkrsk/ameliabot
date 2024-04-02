@@ -189,7 +189,7 @@ public partial class MusicCommands
     public async Task QueueAsync(CommonContext ctx)
     {
         await ctx.DeferAsync().ConfigureAwait(false);
-        var playlist = await GetPlaylistAsync(ctx, false);
+        var playlist = await audioService.Players.GetPlayerAsync<GuildPlaylist>(ctx.Guild.Id);
         await ctx.RespondEmbedAsync(MusicEmbeds.QueueEmbed(playlist, ctx.Member));
     }
 

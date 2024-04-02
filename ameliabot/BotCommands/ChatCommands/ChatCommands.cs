@@ -7,12 +7,13 @@ public static class ChatCommands
 {
     public static async Task SayPastaAsync(CommonContext ctx)
     {
-        if (ctx.DeferAsync != null)
-            await ctx.DeferAsync(false);
+        await ctx.DeferAsync(false);
 
         string pasta = (await PastaParser.GetFilteredPastaAsync("ASCII", "стрим", "стример", "саб", "твич")).Text;// "Админ copypastas.ru лучший!!!!)))))
-        
-        await ctx.RespondTextAsync(pasta);
+
+        if (ctx.EditResponseAsync != null)
+            await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent(pasta)); // TODO: SET IsResponsed TO TRUE !!!!!!!!!!!!!!!
+        else await ctx.RespondTextAsync(pasta);
     }
 
     public static async Task FlipCoinAsync(CommonContext ctx)

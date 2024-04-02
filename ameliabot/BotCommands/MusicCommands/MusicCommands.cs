@@ -179,7 +179,7 @@ public partial class MusicCommands
 
         if(playlist.CurrentTrack != null)
         {
-            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"{playlist.CurrentTrack.Title} пропущен.", ctx.Member));
+            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"`{playlist.CurrentTrack.Title}` пропущен.", ctx.Member));
             await playlist.SkipAsync((int)count);
             return;
         }
@@ -217,7 +217,7 @@ public partial class MusicCommands
         if (playlist.CurrentTrack != null)
         {
             playlist.RepeatMode = playlist.RepeatMode == TrackRepeatMode.Track ? TrackRepeatMode.None : TrackRepeatMode.Track;
-            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"Трек {(playlist.RepeatMode == TrackRepeatMode.Track ? "зациклен" : "расциклен")}", ctx.Member));
+            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"Трек {(playlist.RepeatMode == TrackRepeatMode.Track ? "зациклен!" : "расциклен!"):ok_hand:}", ctx.Member));
         }
         else
             await ctx.RespondEmbedAsync(MusicEmbeds.EmptyQueueEmbed(ctx.Member));

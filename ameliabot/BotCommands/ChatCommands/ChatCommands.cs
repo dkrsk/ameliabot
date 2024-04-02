@@ -11,9 +11,7 @@ public static class ChatCommands
 
         string pasta = (await PastaParser.GetFilteredPastaAsync("ASCII", "стрим", "стример", "саб", "твич")).Text;// "Админ copypastas.ru лучший!!!!)))))
 
-        if (ctx.EditResponseAsync != null)
-            await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent(pasta)); // TODO: SET IsResponsed TO TRUE !!!!!!!!!!!!!!!
-        else await ctx.RespondTextAsync(pasta);
+        await ctx.RespondTextAsync(pasta);
     }
 
     public static async Task FlipCoinAsync(CommonContext ctx)

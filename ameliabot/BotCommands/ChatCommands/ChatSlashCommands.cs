@@ -7,13 +7,13 @@ public class ChatSlashCommands : ApplicationCommandModule
     [SlashCommand("pasta", "Пишет случайную пасту с copypastas.ru")]
     public async Task SayPastaAsync(InteractionContext ctx)
     {
-        await ChatCommands.SayPastaAsync(new CommonContext(ctx));
+        await ChatCommands.SayPastaAsync(new SlashContext(ctx));
     }
 
     [SlashCommand("coin", "Подбрасывает монетку")]
     public async Task FlipCoinAsync(InteractionContext ctx)
     {
-        await ChatCommands.FlipCoinAsync(new CommonContext(ctx));
+        await ChatCommands.FlipCoinAsync(new SlashContext(ctx));
     }
 
     [SlashCommand("rand", "Выдает случайное число в заданных пределах")]
@@ -21,6 +21,6 @@ public class ChatSlashCommands : ApplicationCommandModule
                                      [Option("минимальное", "Минимальное значение случайного числа")] long min = 0,
                                      [Option("максимальное", "Максимальное значение случайного числа")] long max = 101)
     {
-        await ChatCommands.GetRandomAsync(new CommonContext(ctx), (int)min, (int)max);
+        await ChatCommands.GetRandomAsync(new SlashContext(ctx), (int)min, (int)max);
     }
 }

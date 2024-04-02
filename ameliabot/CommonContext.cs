@@ -4,72 +4,89 @@ using DSharpPlus.SlashCommands;
 
 namespace DnKR.AmeliaBot;
 
-public class CommonContext
+
+public abstract class CommonContext
 {
-    public delegate Task RespondEmbedOperation(DiscordEmbed embed, bool ephemeral = false, DiscordComponent[]? components = null);
-    public delegate Task RespondTextOperation(string content, bool ephemeral = false);
-    public delegate Task EditResponseAsyncOperation(DiscordWebhookBuilder webhookBuilder, IEnumerable<DiscordAttachment>? attachments = null);
-    public delegate Task DeferOperation(bool ephemeral = false);
+    public abstract DiscordGuild Guild { get; }
+    public abstract DiscordMember? Member { get; }
+    public abstract DiscordChannel Channel { get; }
+    public bool IsDefered { get; protected set; } = false;
+    public bool IsResponsed { get; protected set; } = false;
+    public DiscordMessage? RespondMessage { get; protected set; }
 
-    public DiscordGuild Guild { get; private set; }
-    public DiscordMember Member { get; private set; }
-    public DiscordChannel Channel { get; private set; }
-
-    public RespondEmbedOperation RespondEmbedAsync;
-    public RespondTextOperation RespondTextAsync;
-    public EditResponseAsyncOperation? EditResponseAsync;
-    public DeferOperation DeferAsync;
-
-    public bool IsDefered { get; private set; } = false;
-    public bool IsResposed { get; private set; } = false;
-
-    public CommonContext(InteractionContext context)
+    public virtual async Task DeferAsync(bool ephemeral = false) { IsDefered = true; }
+    public abstract Task RespondAsync(DiscordMessageBuilder messageBuilder);
+    public virtual async Task RespondEmbedAsync(DiscordEmbed embed, bool ephemeral = false, DiscordComponent[]? components = null)
     {
-        this.Guild = context.Guild;
-        this.Member = context.Member;
-        this.Channel = context.Channel;
-        this.RespondEmbedAsync = (DiscordEmbed embed, bool e, DiscordComponent[]? c) =>
+        var msg = new DiscordMessageBuilder().AddEmbed(embed);
+        if (components != null)
+            msg.AddComponents(components);
+        await RespondAsync(msg);
+    }
+    public virtual async Task RespondTextAsync(string content, bool ephemeral = false)
+    {
+        var msg = new DiscordMessageBuilder().WithContent(content);
+        await RespondAsync(msg);
+    }
+    public virtual async Task EditResponseAsync(DiscordMessageBuilder messageBuilder, IEnumerable<DiscordAttachment>? attachments = null)
+    {
+        if (RespondMessage is null)
         {
-            if (!IsDefered)
-            {
-                if (!IsResposed)
-                {
-                    IsResposed = true;
-                    return context.CreateResponseAsync(embed, e);
-                }
-                IsResposed = true;
-                return context.FollowUpAsync(new DiscordFollowupMessageBuilder().AddEmbed(embed).AsEphemeral(e));
-            }
+            await RespondAsync(messageBuilder);
+            return;
+        }
+    }
+}
 
-            var msg = new DiscordWebhookBuilder().AddEmbed(embed);
-            if (c != null)
-                msg.AddComponents(c);
-            IsDefered = false;
-            IsResposed = true;
-            return context.EditResponseAsync(msg);
-        };
-        this.EditResponseAsync = context.EditResponseAsync;
-        this.RespondTextAsync = context.CreateResponseAsync;
-        this.DeferAsync = (bool e) =>
-        { 
-            IsDefered = true;
-            return context.DeferAsync(e);
-        };
+public class NextContext(CommandContext commandContext) : CommonContext
+{
+    public override DiscordGuild Guild => commandContext.Guild;
+    public override DiscordMember? Member => commandContext.Member;
+    public override DiscordChannel Channel => commandContext.Channel;
+
+    private readonly CommandContext commandContext = commandContext;
+
+    public override async Task RespondAsync(DiscordMessageBuilder messageBuilder)
+    {
+        RespondMessage = await commandContext.RespondAsync(messageBuilder);
+        IsResponsed = true;
     }
 
-    public CommonContext(CommandContext context)
+    public override async Task EditResponseAsync(DiscordMessageBuilder messageBuilder, IEnumerable<DiscordAttachment>? attachments = null)
     {
-        this.Guild = context.Guild;
-        this.Member = context.Member ?? (DiscordMember)context.Client.CurrentUser;
-        this.Channel = context.Channel;
-        this.RespondEmbedAsync = (DiscordEmbed embed, bool e, DiscordComponent[]? components) =>
+        await base.EditResponseAsync(messageBuilder);
+        await RespondMessage.ModifyAsync(messageBuilder);
+    }
+}
+
+public class SlashContext(InteractionContext interactionContext) : CommonContext
+{
+    public override DiscordGuild Guild => interactionContext.Guild;
+    public override DiscordMember? Member => interactionContext.Member;
+    public override DiscordChannel Channel => interactionContext.Channel;
+
+    private readonly InteractionContext interactionContext = interactionContext;
+
+    public override async Task DeferAsync(bool e)
+    {
+        await base.DeferAsync(e);
+        await interactionContext.DeferAsync(e);
+    }
+
+    public override async Task RespondAsync(DiscordMessageBuilder messageBuilder)
+    {
+        if (!IsDefered)
         {
-            var msg = new DiscordMessageBuilder().AddEmbed(embed);
-            if (components != null)
-                msg.AddComponents(components);
-            return context.RespondAsync(msg);
-        };
-        this.RespondTextAsync = (string content, bool ephemeral) => context.RespondAsync(content);
-        this.DeferAsync = async (bool e) => { return; }; //skipcq: CS-R1085
+            if (!IsResponsed)
+            {
+                IsResponsed = true;
+                await interactionContext.CreateResponseAsync(new DiscordInteractionResponseBuilder(messageBuilder));
+            }
+            IsResponsed = true;
+            await interactionContext.FollowUpAsync(new DiscordFollowupMessageBuilder(messageBuilder));
+        }
+        IsDefered = false;
+        IsResponsed = true;
+        await interactionContext.EditResponseAsync(new DiscordWebhookBuilder(messageBuilder));
     }
 }

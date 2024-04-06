@@ -75,6 +75,9 @@ internal class Program
             .SetMinimumLevel(LogLevel.Information)
             #endif
         );
-        builder.Build().Run();
+
+        var host = builder.Build();
+        AppDomain.CurrentDomain.ProcessExit += (object? _, EventArgs _) => { host.Dispose(); };
+        host.Run();
     }
 }

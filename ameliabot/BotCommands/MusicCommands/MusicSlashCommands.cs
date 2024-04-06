@@ -92,4 +92,10 @@ public class MusicSlashCommands : ApplicationCommandModule
         await MusicCommands.PlayPreviousAsync(new SlashContext(ctx));
     }
 
+    [SlashCommand("lofi", "Включить лофай-герл")]
+    public async Task PlayLofiCommand(InteractionContext ctx)
+    {
+        await PlayCommandAsync(ctx, query: "https://www.youtube.com/watch?v=jfKfPfyJRdk");
+    }
+
 }

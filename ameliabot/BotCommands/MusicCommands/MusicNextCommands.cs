@@ -88,10 +88,15 @@ public class MusicNextCommands : BaseCommandModule
         await MusicCommands.PlaySkipAsync(new NextContext(ctx), query);
     }
 
-    //previous command
     [Command("previous"), Aliases("prev", "зкум", "зкумшщгы")]
     public async Task PreviousCommandAsync(CommandContext ctx)
     {
         await MusicCommands.PlayPreviousAsync(new NextContext(ctx));
+    }
+
+    [Command("lofi"), Aliases("дщаш")]
+    public async Task PlayLofiCommand(CommandContext ctx)
+    {
+        await PlayCommandAsync(ctx, query: "https://www.youtube.com/watch?v=jfKfPfyJRdk");
     }
 }

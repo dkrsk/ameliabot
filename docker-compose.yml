@@ -1,0 +1,29 @@
+version: "3"
+
+services:
+  lavalink:
+    image: fredboat/lavalink:4.0.6-alpine
+    container_name: lavalink
+    restart: unless-stopped
+    environment:
+      - SERVER_PORT=2333
+      - LAVALINK_SERVER_PASSWORD=youshallnotpass
+    volumes:
+      - ./application.yml:/opt/Lavalink/application.yml
+    networks:
+      - lavalink-net
+    expose:
+      - 2333
+
+  amelia:
+    build: .
+    environment:
+      - DTOKEN=${DTOKEN}
+    depends_on:
+      - lavalink
+    networks:
+      - lavalink-net
+
+networks:
+  lavalink-net:
+    name: lavalink-net

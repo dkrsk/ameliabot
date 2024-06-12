@@ -61,8 +61,8 @@ internal class Program
         builder.Services.ConfigureLavalink(options =>
         {
             options.Passphrase = "youshallnotpass";
-            options.BaseAddress = new Uri("http://127.0.0.1:2334/");
-            options.WebSocketUri = new Uri("ws://127.0.0.1:2334/v4/websocket");
+            options.BaseAddress = new Uri("http://lavalink:2333/");
+            options.WebSocketUri = new Uri("ws://lavalink:2333/v4/websocket");
             options.ReadyTimeout = TimeSpan.FromSeconds(10);
         });
 

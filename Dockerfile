@@ -19,9 +19,7 @@ RUN touch ./version && \
 	git log -1 | grep "Date:" | cut -d ' ' -f4- >> ./version && \
 	git branch | grep \* | cut -d ' ' -f2- >> ./version
 
-RUN curl -L -0 https://github.com/ZeyoYT/Lavalink/releases/download/Fixed/Lavalink.jar -o ./Lavalink.jar && \
-	curl https://pastebin.com/raw/2a1ZE9fp -o ./application.yml
-
+RUN curl -L -0 https://github.com/lavalink-devs/Lavalink/releases/download/4.0.6/Lavalink.jar -o ./Lavalink.jar
 EXPOSE 2334
 RUN chmod +x ./init.sh
 

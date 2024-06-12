@@ -14,8 +14,9 @@
     <PackageReference Include="DSharpPlus.CommandsNext" Version="4.4.6" />
     <PackageReference Include="DSharpPlus.Interactivity" Version="4.4.6" />
     <PackageReference Include="DSharpPlus.SlashCommands" Version="4.4.6" />
-    <PackageReference Include="Lavalink4NET.DSharpPlus" Version="4.0.17" />
+    <PackageReference Include="Lavalink4NET.DSharpPlus" Version="4.0.18" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="System.Net.Security" Version="4.3.1" /> <!-- transit -->
   </ItemGroup>
 
 </Project>

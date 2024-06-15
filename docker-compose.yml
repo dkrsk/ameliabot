@@ -17,8 +17,10 @@ services:
 
   amelia:
     build: .
+    image: amelia
     environment:
       - DTOKEN=${DTOKEN}
+    container_name: ameliabot
     depends_on:
       - lavalink
     networks:

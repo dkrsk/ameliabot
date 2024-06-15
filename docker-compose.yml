@@ -17,10 +17,12 @@ services:
 
   amelia:
     build: .
+    image: amelia
     environment:
       - DTOKEN=${DTOKEN}
       - VKToken=${VKToken}
       - VKSecret=${VKSecret}
+    container_name: ameliabot
     depends_on:
       - lavalink
     networks:

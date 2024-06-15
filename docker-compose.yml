@@ -19,6 +19,8 @@ services:
     build: .
     environment:
       - DTOKEN=${DTOKEN}
+      - VKToken=${VKToken}
+      - VKSecret=${VKSecret}
     depends_on:
       - lavalink
     networks:

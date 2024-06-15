@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace DnKR.AmeliaBot.BotCommands.MusicCommands;
 
-public class MusicNextCommands : BaseCommandModule
+public partial class MusicNextCommands : BaseCommandModule
 {
     private readonly MusicCommands MusicCommands;
 

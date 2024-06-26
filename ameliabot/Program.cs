@@ -58,6 +58,7 @@ internal class Program
             Intents = DiscordIntents.Guilds | DiscordIntents.GuildMessages | DiscordIntents.GuildVoiceStates | DiscordIntents.MessageContents
         });
         builder.Services.AddLavalink();
+        builder.Services.AddMemoryCache();
         builder.Services.ConfigureLavalink(options =>
         {
             options.Passphrase = "youshallnotpass";

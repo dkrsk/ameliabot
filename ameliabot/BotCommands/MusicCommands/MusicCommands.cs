@@ -13,18 +13,6 @@ using Lavalink4NET.Players.Queued;
 
 namespace DnKR.AmeliaBot.BotCommands.MusicCommands;
 
-public struct JoinMessage
-{
-    public int Code => code;
-    public string Content => content;
-    private int code;
-    private string content;
-    public JoinMessage(int code, string content)
-    {
-        this.code = code;
-        this.content = content;
-    }
-}
 
 public partial class MusicCommands
 {
@@ -65,10 +53,9 @@ public partial class MusicCommands
             return null;
         }
 
-        DiscordEmbed embed;
         if (!result.IsSuccess)
         {
-            embed = result.Status switch
+            DiscordEmbed embed = result.Status switch
             {
                 PlayerRetrieveStatus.UserNotInVoiceChannel => GlobalEmbeds.UniEmbed("Ты не подключен к голосовому каналу!", ctx.Member),
                 _ => GlobalEmbeds.ShortErrorEmbed(ctx.Member)
@@ -110,11 +97,6 @@ public partial class MusicCommands
         var playlist = await GetPlaylistAsync(ctx);
         if (playlist is null) return;
 
-        // TODO: add playlist search feature
-        //Regex ytRegex = YtRegex();
-        //var searchMode = ytRegex.IsMatch(query) ?
-        //    TrackSearchMode.None
-        //    : TrackSearchMode.YouTube;
         var searchResult = await audioService.Tracks
             .LoadTracksAsync(query, TrackSearchMode.YouTube);
         
@@ -235,12 +217,12 @@ public partial class MusicCommands
 
     public async Task PauseAsync(CommonContext ctx)
     {
-        var playlist = await GetPlaylistAsync(ctx, false);
+        var playlist = await GetPlaylistAsync(ctx);
         if (playlist is null) return;
 
         if (playlist.CurrentTrack != null)
         {
-            string answer = playlist.IsPaused ? "Продолжаем!:ok_hand:" : "Приостоновленно!:ok_hand:";
+            string answer = playlist.IsPaused ? "Продолжаем!:ok_hand:" : "Приостановлено!:ok_hand:";
             await playlist.ControlPauseAsync();
             await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed(answer, ctx.Member));
         }

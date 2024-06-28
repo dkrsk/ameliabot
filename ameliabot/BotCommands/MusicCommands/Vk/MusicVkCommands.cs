@@ -14,6 +14,12 @@ partial class MusicCommands
     VkAudio vk = new VkAudio();
     bool isVkAuthSuccess = false;
 
+    [ProviderChecker]
+    private bool VkProviderCheck(string query)
+    {
+        return false;
+    }
+
     private async Task AuthVkAsync()
     {
         if (!isVkAuthSuccess)

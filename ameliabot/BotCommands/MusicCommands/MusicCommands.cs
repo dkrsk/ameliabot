@@ -1,6 +1,7 @@
 using DnKR.AmeliaBot.Music;
 
 using System.Text.RegularExpressions;
+using System.Linq;
 using Microsoft.Extensions.Options;
 
 using DSharpPlus.Entities;
@@ -10,6 +11,7 @@ using Lavalink4NET.Players;
 using Lavalink4NET.Rest.Entities.Tracks;
 using Lavalink4NET.Clients;
 using Lavalink4NET.Players.Queued;
+using System.Reflection;
 
 namespace DnKR.AmeliaBot.BotCommands.MusicCommands;
 
@@ -17,6 +19,10 @@ namespace DnKR.AmeliaBot.BotCommands.MusicCommands;
 public partial class MusicCommands
 {
     private readonly IAudioService audioService;
+
+    private delegate bool ProviderCheck(string q);
+    private readonly ProviderCheck[] providerCheckers;
+
     private static MusicCommands instance;
 
     public static MusicCommands GetInstance(IAudioService audioService)
@@ -31,6 +37,11 @@ public partial class MusicCommands
         ArgumentNullException.ThrowIfNull(audioService);
 
         this.audioService = audioService;
+
+        providerCheckers = this.GetType().GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
+                .Where(m => m.GetCustomAttributes(typeof(ProviderCheckerAttribute), false).Length > 0)
+                .Select(m => m.CreateDelegate<ProviderCheck>(this))
+                .ToArray(); // наверн надо сделать мапу чекер:плей и в основном плейе это все хандлить я хз хочу спать
     }
 
     private async ValueTask<GuildPlaylist?> GetPlaylistAsync(CommonContext ctx, bool connectToVoiceChannel = true)

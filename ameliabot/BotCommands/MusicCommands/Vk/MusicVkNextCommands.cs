@@ -8,6 +8,6 @@ public partial class MusicNextCommands
     [Command("vkplay"), Aliases("vp","млздфн","мз")]
     public async Task PlayVkCommandAsync(CommandContext ctx, [RemainingText] string query)
     {
-        await MusicCommands.VkPlayAsync(new NextContext(ctx), query, false);
+        await MusicCommands.PlayAsync(new NextContext(ctx), "vksearch:"+query, false);
     }
 }

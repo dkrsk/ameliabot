@@ -6,7 +6,7 @@ namespace DnKR.AmeliaBot.Music;
 
 public static class MusicEmbeds
 {
-    private const string githubUrl = "https://github.com/dkrsk/ameliabot0";
+    private const string githubUrl = "https://github.com/dkrsk/ameliabot";
     private static string GetDuration(LavalinkTrack? track)
     {
         if(track is null) return "Unknown";

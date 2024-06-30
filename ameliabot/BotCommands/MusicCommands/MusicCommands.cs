@@ -12,6 +12,7 @@ using Lavalink4NET.Rest.Entities.Tracks;
 using Lavalink4NET.Clients;
 using Lavalink4NET.Players.Queued;
 using System.Reflection;
+using Lavalink4NET.Tracks;
 
 namespace DnKR.AmeliaBot.BotCommands.MusicCommands;
 
@@ -20,8 +21,8 @@ public partial class MusicCommands
 {
     private readonly IAudioService audioService;
 
-    private delegate bool ProviderCheck(string q);
-    private readonly ProviderCheck[] providerCheckers;
+    private delegate ValueTask<(LavalinkTrack? result, bool isSuccess)> ProviderLoader(CommonContext ctx, GuildPlaylist playlist, string query);
+    private readonly ProviderLoader[] providerLoaders;
 
     private static MusicCommands instance;
 
@@ -38,10 +39,10 @@ public partial class MusicCommands
 
         this.audioService = audioService;
 
-        providerCheckers = this.GetType().GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-                .Where(m => m.GetCustomAttributes(typeof(ProviderCheckerAttribute), false).Length > 0)
-                .Select(m => m.CreateDelegate<ProviderCheck>(this))
-                .ToArray(); // наверн надо сделать мапу чекер:плей и в основном плейе это все хандлить я хз хочу спать
+        providerLoaders = this.GetType().GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
+                .Where(m => m.GetCustomAttributes(typeof(ProviderLoaderAttribute), false).Length > 0)
+                .Select(m => m.CreateDelegate<ProviderLoader>(this))
+                .ToArray();
     }
 
     private async ValueTask<GuildPlaylist?> GetPlaylistAsync(CommonContext ctx, bool connectToVoiceChannel = true)
@@ -108,35 +109,36 @@ public partial class MusicCommands
         var playlist = await GetPlaylistAsync(ctx);
         if (playlist is null) return;
 
-        var searchResult = await audioService.Tracks
-            .LoadTracksAsync(query, TrackSearchMode.YouTube);
-        
-        if(searchResult.IsFailed)
-        {
-            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"По запросу {query} ничего не нашлось.", ctx.Member));
-            return;
-        }
+        if (!query[2..].StartsWith("search")) query = "ytsearch:" + query;
 
-        if (searchResult.IsPlaylist)
+        LavalinkTrack? trackResult = null;
+        var success = false;
+        foreach(var load in providerLoaders)
         {
-            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"{searchResult.Playlist.Name} добавлен", ctx.Member));
-            
-            await playlist.PlayAsync(searchResult.Track);
-            foreach(var track in searchResult.Tracks[1..])
+            var (result, isSuccess) = await load.Invoke(ctx, playlist, query);
+            if (isSuccess)
             {
-                await playlist.Queue.AddAsync(new TrackQueueItem(track));
+                trackResult = result;
+                success = true;
+                break;
             }
-            return;
         }
 
-        await ctx.RespondEmbedAsync(MusicEmbeds.TrackAdded(searchResult.Track, ctx.Member));
-
-        if(playTop)
+        if (!success)
         {
-            await playlist.Queue.InsertAsync(0, new TrackQueueItem(searchResult.Track));
+            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"По запросу {query.Substring(9)} ничего не нашлось.", ctx.Member));
+            return;
+        }
+        if (trackResult is null) return;
+
+        await ctx.RespondEmbedAsync(MusicEmbeds.TrackAdded(trackResult, ctx.Member));
+
+        if (playTop)
+        {
+            await playlist.Queue.InsertAsync(0, new TrackQueueItem(trackResult));
         }
         else
-            await playlist.PlayAsync(searchResult.Track);
+            await playlist.PlayAsync(trackResult);
 
     }
 
@@ -273,4 +275,7 @@ public partial class MusicCommands
 
     [GeneratedRegex("^((?:https?:)?\\/\\/)?((?:www|m)\\.)?((?:youtube\\.com|youtu.be))(\\/(?:[\\w\\-]+\\?v=|embed\\/|v\\/)?)([\\w\\-]+)(\\S+)?$")]
     private static partial Regex YtRegex();
+
+    [GeneratedRegex(@"^(?:https?:\/\/)?(?:m\.)?vk\.(com|ru).*(audio)(.*_.*_.*)\/?$")]
+    private static partial Regex VkRegex();
 }

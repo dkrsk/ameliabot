@@ -1,5 +1,6 @@
 ﻿using DnKR.AmeliaBot.Music;
 using DnKR.VkAudioExtractor;
+using DSharpPlus.Entities;
 using Lavalink4NET;
 using Lavalink4NET.Extensions;
 using Lavalink4NET.Players.Queued;
@@ -14,12 +15,6 @@ partial class MusicCommands
     VkAudio vk = new VkAudio();
     bool isVkAuthSuccess = false;
 
-    [ProviderChecker]
-    private bool VkProviderCheck(string query)
-    {
-        return false;
-    }
-
     private async Task AuthVkAsync()
     {
         if (!isVkAuthSuccess)
@@ -33,44 +28,34 @@ partial class MusicCommands
         }
     }
 
-    public async Task VkPlayAsync(CommonContext ctx, string query, bool playTop)
+    [ProviderLoader]
+    private async ValueTask<(LavalinkTrack?, bool)> LoadVkAsync(CommonContext ctx, GuildPlaylist playlist, string query)
     {
+        if (!(query.StartsWith("vksearch:") || VkRegex().Match(query).Success)) return (null, false);
+
         if (!isVkAuthSuccess) await AuthVkAsync();
-        var playlist = await GetPlaylistAsync(ctx);
-        if (playlist is null) return;
 
         await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"Поиск по Very Kool music работает в бета режиме!", ctx.Member));
 
-        var searchResult = await vk.SearchAsync(query, 1,0);
+        var searchResult = await vk.SearchAsync(query.Substring(9), 1,0);
 
-        if (!searchResult.IsSucces)
-        {
-            await ctx.RespondEmbedAsync(GlobalEmbeds.UniEmbed($"По запросу {query} ничего не нашлось.", ctx.Member));
-            return;
-        }
+        if (!searchResult.IsSucces) return (null, false);
         
-        var a = await audioService.Tracks.LoadTrackAsync(searchResult.Tracks[0].Uri, TrackSearchMode.None);
-
+        var loadedTrack = await audioService.Tracks.LoadTrackAsync(searchResult.Tracks[0].Uri, TrackSearchMode.None);
+        
         var track = new LavalinkTrack
         {
             Author = searchResult.Tracks[0].Artist,
             Uri = new Uri("http://www.verycoolmusic.com/"),//new Uri(searchResult.Tracks[0].ShareUrl),
             ArtworkUri = new Uri(searchResult.Tracks[0].Thumb),
             Title = searchResult.Tracks[0].Title,
-            Identifier = a.Identifier,
+            Identifier = loadedTrack.Identifier,
             Duration = TimeSpan.FromSeconds(searchResult.Tracks[0].Duration),
-            SourceName = a.SourceName,
-            ProbeInfo = a.ProbeInfo
+            SourceName = loadedTrack.SourceName,
+            ProbeInfo = loadedTrack.ProbeInfo
         };
-        
-        await ctx.RespondEmbedAsync(MusicEmbeds.TrackAdded(track, ctx.Member));
 
-        if (playTop)
-        {
-            await playlist.Queue.InsertAsync(0, new TrackQueueItem(track));
-        }
-        else
-            await playlist.PlayAsync(track);
+        return (track, true);
     }
 
 }

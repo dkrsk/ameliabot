@@ -6,8 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-using System.IO;
-using System.Runtime.InteropServices;
 
 namespace DnKR.AmeliaBot;
 
@@ -61,19 +59,24 @@ internal class Program
         builder.Services.ConfigureLavalink(options =>
         {
             options.Passphrase = "youshallnotpass";
+#if DEBUG
+            options.BaseAddress = new Uri("http://localhost:2333/");
+            options.WebSocketUri = new Uri("ws://localhost:2333/v4/websocket");
+#else
             options.BaseAddress = new Uri("http://lavalink:2333/");
             options.WebSocketUri = new Uri("ws://lavalink:2333/v4/websocket");
+#endif
             options.ReadyTimeout = TimeSpan.FromSeconds(10);
         });
 
         builder.Services.AddSingleton<MusicCommands>();
 
         builder.Services.AddLogging(s => s.AddConsole()
-            #if DEBUG
+#if DEBUG
             .SetMinimumLevel(LogLevel.Trace)
-            #else
+#else
             .SetMinimumLevel(LogLevel.Information)
-            #endif
+#endif
         );
 
         var host = builder.Build();
